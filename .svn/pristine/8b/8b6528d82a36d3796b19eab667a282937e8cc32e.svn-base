@@ -1,0 +1,43 @@
+<?php
+	namespace Shorturl;
+
+	use Laminas\Router\Http\Segment;
+
+	return [
+		'router' => [
+			'routes' => [
+				'redirect' => [
+					'type'    => Segment::class,
+					'options' => [
+						'route' => '/:urlcode',
+						'constraints' => [
+							'urlcode' => '[a-zA-Z0-9_-]*',
+						],
+						'defaults' => [
+							'controller' => Controller\RedirectController::class,
+							'action'     => 'index',
+						],
+					],
+				],
+				'gui' => [
+					'type'    => Segment::class,
+					'options' => [
+						'route' => '/shorturl[/:action[/:id]]',
+						'constraints' => [
+							'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+							'id'     => '[0-9]+',
+						],
+						'defaults' => [
+							'controller' => Controller\ShorturlController::class,
+							'action'     => 'index',
+						],
+					],
+				],
+			],
+		],
+		'view_manager' => [
+			'template_path_stack' => [
+				'shorturl' => __DIR__ . '/../view',
+			],
+		],
+	];

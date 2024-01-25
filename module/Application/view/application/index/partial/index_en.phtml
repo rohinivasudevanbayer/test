@@ -1,0 +1,19 @@
+<h1>Welcome demo to the Bayer Short URL service
+        
+<?php
+
+//echo "<pre>";print_r($_SERVER);
+$servername = RDS_HOSTNAME;
+$username = RDS_USERNAME;
+$password = RDS_PASSWORD;
+
+// Create connection
+$conn = new mysqli($servername, $username, $password);
+
+// Check connection
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
+}
+echo "Connected Successfully";
+?>
+        </h1>

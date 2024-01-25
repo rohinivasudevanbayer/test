@@ -1,0 +1,127 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application;
+
+use Auth\Service\AuthManager;
+use Laminas\Mvc\MvcEvent;
+use Laminas\ServiceManager\Factory\InvokableFactory;
+
+class Module
+{
+    public function getConfig(): array
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+
+    public function getControllerConfig()
+    {
+        return [
+            'factories' => [
+                Controller\IndexController::class => function ($container) {
+                    $config = $container->get('config');
+                    $mailSender = $container->get(Service\MailSender::class);
+                    return new Controller\IndexController($config, $mailSender);
+                },
+                Controller\UserController::class => function ($container) {
+                    $config = $container->get('config');
+                    return new Controller\UserController(
+                        $config,
+                        $container->get(AuthManager::class),
+                        $container->get(\Shorturl\Model\ShorturlsTable::class)
+                    );
+                },
+            ],
+        ];
+    }
+
+    public function getServiceConfig()
+    {
+        return [
+            'aliases' => [
+                'url' => Laminas\View\Helper\Url::class,
+            ],
+            'factories' => [
+                Laminas\View\Helper\Url::class => InvokableFactory::class,
+                Service\MailSender::class => function ($container) {
+                    $config = $container->get('config');
+                    return new Service\MailSender($config);
+                },
+            ],
+        ];
+    }
+
+    public function onBootstrap(MvcEvent $e)
+    {
+        $application = $e->getApplication();
+        //$controller = $e->getTarget()->getMvcEvent()->getViewModel();
+        $serviceManager = $application->getServiceManager();
+
+        $config = $serviceManager->get('config');
+        $session = $serviceManager->get('SessionContainer');
+        $translator = $serviceManager->get('MvcTranslator');
+        $request = $e->getRequest();
+        $this->initLanguage($config, $session, $translator, $request);
+
+        $layoutView = $e->getApplication()->getMvcEvent()->getViewModel();
+        $authManager = $serviceManager->get(AuthManager::class);
+
+        if (!$authManager->isLoggedIn()) {
+            $authManager->autoOAuthLogin();
+        }
+
+        $this->initLayoutView($config, $session, $layoutView, $authManager);
+    }
+
+    protected function initLayoutView(
+        array $config,
+        \Laminas\Session\Container $session,
+        $layoutView,
+        $authManager
+    ) {
+        $layoutView->showSearch = false;
+        $layoutView->languages = $config['languages'];
+        $layoutView->activeLanguage = $session['activeLanguage'];
+        $layoutView->isLoggedIn = $authManager->isLoggedIn();
+        $layoutView->user = $authManager->isLoggedIn() ? $authManager->getUser() : '';
+        $layoutView->breadcrumbItems = [['label' => 'ShortURL', 'route' => $authManager->isLoggedIn() ? 'shorturl' : 'home']];
+    }
+
+    /**
+     * Setup translator language and handle language change
+     *
+     * @param array $config The application configuration
+     * @param \Laminas\Session\Container $session The session container to save the active language
+     * @param \Laminas\Mvc\I18n\Translator $translator The application translator
+     * @param \Laminas\Http\Request $request The current request (which potentially holds the language query param)
+     * @return void
+     */
+    protected function initLanguage(
+        array $config,
+        \Laminas\Session\Container $session,
+        \Laminas\Mvc\I18n\Translator $translator,
+        \Laminas\Http\Request $request
+    ) {
+        $fallbackLanguage = 'en';
+        if (!is_null($request->getQuery()->lang)) {
+            $querystringLang = $request->getQuery()->lang;
+            if (in_array($querystringLang, $config['languages'])) {
+                $session->activeLanguage = $querystringLang;
+            }
+        }
+
+        if (empty($session->activeLanguage)) {
+            $browserLang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
+            if (in_array($browserLang, $config['languages'])) {
+                $session->activeLanguage = $browserLang;
+            } else {
+                $session->activeLanguage = $fallbackLanguage;
+            }
+        }
+
+        $translator
+            ->setLocale($session->activeLanguage)
+            ->setFallbackLocale($fallbackLanguage);
+    }
+
+}

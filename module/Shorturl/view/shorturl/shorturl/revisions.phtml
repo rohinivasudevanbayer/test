@@ -1,0 +1,119 @@
+<div class="row">
+    <div class="col col-md-12">
+        <?php if (!empty($this->error)): ?>
+            <div class="alert alert-danger">
+                <?=$this->translate($this->error)?>
+            </div>
+            <?php if (!empty($this->showErrorOnly)): ?>
+                <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams]);?>"
+                class="btn btn-default btn-back">
+                    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    <?=$this->translate('back')?>
+                </a>
+            <?php endif;?>
+        <?php else: ?>
+            <h3>
+                <?=$this->translate('Revisions for')?>
+                <a title="<?=$this->translate('Edit')?>" href="<?=$this->url('shorturl', ['action' => 'edit', 'id' => $this->shorturl->id], ['query' => ['page' => $this->page]])?>">
+                    https://<?=$this->escapeHtml($this->shorturl->short_url)?>
+                    <span title="<?=$this->translate('edit')?>" aria-hidden="true" class="glyphicon glyphicon-pencil"></span>
+                </a>
+            </h3>
+            <?php if (empty($this->paginator)): ?>
+                <div class="alert alert-danger">
+                    <?=$this->translate('no data found')?>
+                </div>
+            <?php else: ?>
+                <?php if ($this->rowsCount > 10): ?>
+                <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>" class="btn btn-default btn-back mr-3"><span class="glyphicon glyphicon-chevron-left mr-3" aria-hidden="true"></span><?=$this->translate('back')?></a>
+                <?php endif;?>
+                <table class="table table-striped table-hover ">
+                    <thead>
+                    <tr>
+                        <th><?=$this->translate('updated at')?></th>
+                        <th><?=$this->translate('targeturl')?></th>
+                        <th><?=$this->translate('Status')?></th>
+                        <th><?=$this->translate('updated by')?></th>
+                        <th class="text-right"><?=$this->translate('actions')?></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (1 === $this->page): ?>
+                    <tr class="revisions-current">
+                        <td><?=$this->shorturl->updated_at?></td>
+                        <td><?=$this->escapeHtml($this->shorturl->target_url)?></td>
+                        <td align="center">
+                            <?php if ($this->shorturl->status == 1): ?>
+                                <span title="<?=$this->translate('active')?>" aria-hidden="true" class="active-status glyphicon glyphicon-ok"></span>
+                            <?php else: ?>
+                                <span title="<?=$this->translate('inactive')?>" aria-hidden="true" class="inactive-status glyphicon glyphicon-remove"></span>
+                            <?php endif;?>
+                        </td>
+                        <td>
+                        <?php if (isset($this->userNames[$this->shorturl->updated_by])): ?>
+                            <?=$this->escapeHtml($this->userNames[$this->shorturl->updated_by])?>
+                        <?php else: ?>
+                            <?=$this->translate('unknown')?>
+                        <?php endif;?>
+                        </td>
+                        <td class="actions text-right">
+                            <?=$this->actionIcons($this->shorturl, $this->queryParams, ['revision'])?>
+                        </td>
+                    </tr>
+                    <?php endif;?>
+                    <?php foreach ($this->paginator as $listItem): ?>
+                    <tr>
+                        <td><?=$listItem->updated_at?></td>
+                        <td><?=$this->escapeHtml($listItem->target_url)?></td>
+                        <td align="center">
+                            <?php if ($listItem->status == 1): ?>
+                                <span title="<?=$this->translate('active')?>" aria-hidden="true" class="active-status glyphicon glyphicon-ok"></span>
+                            <?php else: ?>
+                                <span title="<?=$this->translate('inactive')?>" aria-hidden="true" class="inactive-status glyphicon glyphicon-remove"></span>
+                            <?php endif;?>
+                        </td>
+                        <td>
+                            <?php if (isset($this->userNames[$listItem->updated_by])): ?>
+                                <?=$this->escapeHtml($this->userNames[$listItem->updated_by])?>
+                            <?php else: ?>
+                                <?=$this->translate('unknown')?>
+                            <?php endif;?>
+                        </td>
+                        <td class="actions text-right">
+                        <a
+                            title="<?=$this->translate('Information')?>"
+                            href="<?=$this->url('shorturl', ['action' => 'revisionInfo', 'id' => $listItem->id], ['query' => $this->queryParams])?>"
+                            data-target="revision-info"
+                            data-toggle="ajaxModal"
+                        >
+                    <span aria-hidden="true" class="glyphicon glyphicon-info-sign"></span>
+                </a>
+                            <?php
+echo $this->modal()->render(
+    'revert-' . $listItem->id, // Modal Name
+    $this->translate('Revert Revision'), // Modal Title
+    $this->translate('Do you really want to restore this version?'), // Modal Description
+    $this->translate('Yes'),
+    $this->translate('Cancel'),
+    $this->url('shorturl', ['action' => 'restoreRevision', 'id' => $listItem->id], ['query' => ['page' => $this->page]]) // Redirect Url
+);
+?>
+                            <a data-toggle="modal" data-target="#revert-<?=$listItem->id?>" title="<?=$this->translate('Revert')?>" href="#">
+                                <span aria-hidden="true" class="glyphicon glyphicon-share-alt"></span>
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach;?>
+                    </tbody>
+                </table>
+                <?=$this->paginationControl(
+    $this->paginator, // paginator object
+    'sliding', // scrolling style
+    'partial/paginator', // partial
+    ['route' => 'revisions', 'routeParams' => ['id' => $this->shorturl->id]]// paginator partial variables
+)?>
+            <?php endif;?>
+            <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>" class="btn btn-default btn-back"><span class="glyphicon glyphicon-chevron-left mr-3" aria-hidden="true"></span><?=$this->translate('back')?></a>
+        <?php endif;?>
+    </div>
+</div>

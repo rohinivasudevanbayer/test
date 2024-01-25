@@ -1,0 +1,15 @@
+<?php
+if (is_array($this->items) && count($this->items)) {
+    $itemCount = count($this->items);
+    $itemNum = 1;
+    foreach ($this->items as $urlConfig) {
+
+        $label = $this->translate($urlConfig['label']);
+        $isActive = $itemNum === $itemCount && $itemCount > 1;
+        $urlOptions = empty($urlConfig['options']) ? [] : $urlConfig['options'];
+        $link = $isActive ? '' : $this->url($urlConfig['route'], $urlOptions);
+
+        $itemNum++;
+        echo $this->partial('partial/breadcrumb_item.phtml', ['label' => $label, 'link' => $link, 'isActive' => $isActive]);
+    }
+}

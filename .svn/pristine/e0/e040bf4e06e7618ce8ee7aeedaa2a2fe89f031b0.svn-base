@@ -1,0 +1,291 @@
+<?php
+namespace Auth\Model;
+
+use Application\Model\AbstractTable;
+use Auth\Model\User;
+use Laminas\Db\ResultSet\ResultSet;
+use Laminas\Db\ResultSet\ResultSetInterface;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Where;
+use Laminas\Db\TableGateway\TableGatewayInterface;
+use Laminas\Paginator\Adapter\DbSelect;
+use Laminas\Paginator\Paginator;
+use Shorturl\Model\Admins2DomainsTable;
+use Shorturl\Model\Shorturl;
+use Shorturl\Model\Shorturls2UsersTable;
+use Shorturl\Model\ShorturlsTable;
+
+class UsersTable extends AbstractTable
+{
+    /** @var string TABLENAME The name of the table */
+    const TABLENAME = 'su_users';
+
+    /** @var Shorturl\Model\Shorturls2UsersTable */
+    private $shorturls2UsersTable;
+
+    /** @var Shorturl\Model\Admins2DomainsTable */
+    private $admins2DomainsTable;
+
+    /**
+     * Constructor
+     *
+     * @param TableGatewayInterface $usersTableGateway
+     */
+    public function __construct(TableGatewayInterface $usersTableGateway, Shorturls2UsersTable $shorturls2UsersTable, Admins2DomainsTable $admins2DomainsTable)
+    {
+        parent::__construct($usersTableGateway);
+        $this->shorturls2UsersTable = $shorturls2UsersTable;
+        $this->admins2DomainsTable = $admins2DomainsTable;
+    }
+
+    /**
+     * Retrieve a use by his email and password (= returns only authenticated user)
+     *
+     * @param string $email
+     * @param string $password
+     * @throws \RuntimeException if the user is not found
+     * @return Auth\Model\User
+     */
+    public function findAuthenticatedUser(string $email, string $password): User
+    {
+        $user = $this->findByEmail($email);
+        if ($user && !password_verify($password, $user->password)) {
+            throw new \RuntimeException('Invalid credentials');
+        }
+        return $user;
+    }
+
+    /**
+     * Find the user by given email or create the user if not exists
+     *
+     * This is used by OAuth authentication
+     *
+     * @param string $email
+     * @param string $lastname
+     * @param string $firstname
+     * @return Auth\Model\User
+     */
+    public function findOrCreateUser(string $email, string $lastname, string $firstname): User
+    {
+        try {
+            $user = $this->findByEmail($email);
+        } catch (\Exception $e) {
+            $user = new User();
+            $user->email = $email;
+            $user->firstname = $firstname;
+            $user->name = $lastname;
+            $user->created_at = date('Y-m-d H:i:s', time());
+            $this->save($user);
+        }
+        return $user;
+    }
+
+    /**
+     * Retrieve a user by his email
+     *
+     * @param string $email
+     * @param string $password
+     * @throws RuntimeException if the user is not found
+     * @return Auth\Model\User
+     */
+    public function findByEmail(string $email): User
+    {
+        $rowset = $this->tableGateway->select(['email' => $email]);
+        $row = $rowset->current();
+        if (!$row) {
+            throw new \RuntimeException(sprintf(
+                'Could not find row with identifier %s',
+                $email
+            ));
+        }
+
+        return $row;
+    }
+
+    /**
+     * Retrieve all the owner for the given shorturl (without owner)
+     *
+     * @param integer $shorturlId
+     * @return \Auth\Model\User
+     */
+    public function getOwnerOfShorturl(int $shorturlId)
+    {
+        $rs = $this->tableGateway->select(function (Select $select) use ($shorturlId) {
+            $select->join(ShorturlsTable::TABLENAME, ShorturlsTable::TABLENAME . '.user_id = ' . self::TABLENAME . '.id', [])
+                ->where([ShorturlsTable::TABLENAME . '.id' => $shorturlId]);
+        });
+        return count($rs) ? $rs->current() : null;
+    }
+
+    /**
+     * Retrieve all shared users for the given shorturl (without owner)
+     *
+     * @param integer $shorturlId
+     * @return ResultSetInterface
+     */
+    public function getSharedUsersForShorturl(int $shorturlId): ResultSetInterface
+    {
+        return $this->tableGateway->select(function (Select $select) use ($shorturlId) {
+            $select->join(Shorturls2UsersTable::TABLENAME, Shorturls2UsersTable::TABLENAME . '.user_id = ' . self::TABLENAME . '.id', [])
+                ->where([Shorturls2UsersTable::TABLENAME . '.shorturl_id' => $shorturlId])
+                ->order(self::TABLENAME . '.name');
+        });
+    }
+
+    /**
+     * Check if the given user has permission to edit the given shorturl.
+     * The user has the permission if he is superadmin, admin for the domain fo the given shorturl,
+     * if he is the owner of the shorturl or the shorturl is shared with him.
+     *
+     * @param User $user
+     * @param Shorturl $shorturl
+     * @return boolean
+     */
+    public function hasPermission(User $user, Shorturl $shorturl): bool
+    {
+        return
+        $user->isSuperAdmin()
+        || $shorturl->isOwnedBy($user->id)
+        || ($user->isAdmin() && $this->admins2DomainsTable->isAdmin($user->id, $shorturl->domain_id))
+        || $this->shorturls2UsersTable->isShare($shorturl->id, $user->id)
+        ;
+    }
+
+    /**
+     * Find all users matching the given searchstring
+     *
+     * @param array $searchTerms
+     * @return ResultSetInterface
+     */
+    public function findUsers(array $searchTerms): ResultSetInterface
+    {
+        return $this->tableGateway->select(function (Select $select) use ($searchTerms) {
+            $select->where(function (Where $where) use ($searchTerms) {
+                foreach ($searchTerms as $searchString) {
+                    $where->nest()
+                        ->like('name', '%' . $searchString . '%')
+                        ->or
+                        ->like('firstname', '%' . $searchString . '%')
+                        ->or
+                        ->like('email', '%' . $searchString . '%')
+                        ->unnest();
+                }
+            })
+                ->order(self::TABLENAME . '.name');
+        });
+    }
+
+    /**
+     * Find the given user by id
+     * Results are cached to avoid multiple DB queries for the same user
+     *
+     * @param integer $id
+     * @return Auth\Model\User
+     */
+    public function getByIdCached(int $id)
+    {
+        static $usersCache = [];
+
+        if (!isset($usersCache[$id])) {
+            $usersCache[$id] = $this->getById($id);
+        }
+
+        return $usersCache[$id];
+    }
+
+    /**
+     * Find all users matching the given searchstring and the given domain
+     *
+     * @param array $searchTerms
+     * @param int|null $domainId
+     * @return Paginator
+     */
+    public function findUsersByTermAndDomainPaginated(array $searchTerms, $domainId): Paginator
+    {
+        $select = new Select($this->tableGateway->getTable());
+        $select->where(function (Where $where) use ($searchTerms) {
+            foreach ($searchTerms as $searchString) {
+                $where->nest()
+                    ->like('name', '%' . $searchString . '%')
+                    ->or
+                    ->like('firstname', '%' . $searchString . '%')
+                    ->or
+                    ->like('email', '%' . $searchString . '%')
+                    ->unnest();
+            }
+        });
+        if (isset($domainId)) {
+            $select->quantifier(Select::QUANTIFIER_DISTINCT)
+                ->join(Admins2DomainsTable::TABLENAME, Admins2DomainsTable::TABLENAME . '.user_id = ' . self::TABLENAME . '.id', [])
+                ->where(function (Where $where) use ($domainId) {
+                    $where->nest()
+                        ->equalTo('superadmin', 1)
+                        ->or
+                        ->nest()
+                        ->equalTo('admin', 1)
+                        ->and
+                        ->equalTo(Admins2DomainsTable::TABLENAME . '.domain_id', $domainId)
+                        ->unnest()
+                        ->unnest();
+                });
+        }
+        $select->order(self::TABLENAME . '.name');
+
+        $resultSetPrototype = new ResultSet();
+        $resultSetPrototype->setArrayObjectPrototype(new User());
+
+        $paginatorAdapter = new DbSelect(
+            $select,
+            $this->tableGateway->getAdapter(),
+            $resultSetPrototype
+        );
+
+        $paginator = new Paginator($paginatorAdapter);
+        return $paginator;
+    }
+
+    /**
+     * Find all admins+superadmins or superadmins only matching the given searchstring
+     *
+     * @param array $searchTerms
+     * @param boolean $superAdminOnly
+     * @return Paginator
+     */
+    public function findAdmins(array $searchTerms, bool $superAdminOnly = false): Paginator
+    {
+        $select = new Select($this->tableGateway->getTable());
+        $select->where(function (Where $where) use ($searchTerms, $superAdminOnly) {
+            foreach ($searchTerms as $searchString) {
+                $where->nest()
+                    ->like('name', '%' . $searchString . '%')
+                    ->or
+                    ->like('firstname', '%' . $searchString . '%')
+                    ->or
+                    ->like('email', '%' . $searchString . '%')
+                    ->unnest();
+            }
+            if ($superAdminOnly) {
+                $where->equalTo('superadmin', 1);
+            } else {
+                $where->nest()
+                    ->equalTo('superadmin', 1)
+                    ->or
+                    ->equalTo('admin', 1)
+                    ->unnest();
+            }
+        });
+        $select->order(self::TABLENAME . '.name');
+
+        $resultSetPrototype = new ResultSet();
+        $resultSetPrototype->setArrayObjectPrototype(new User());
+
+        $paginatorAdapter = new DbSelect(
+            $select,
+            $this->tableGateway->getAdapter(),
+            $resultSetPrototype
+        );
+
+        $paginator = new Paginator($paginatorAdapter);
+        return $paginator;
+    }
+}

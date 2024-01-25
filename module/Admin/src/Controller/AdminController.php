@@ -1,0 +1,286 @@
+<?php
+namespace Admin\Controller;
+
+use Auth\Model\UsersTable;
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\Mvc\MvcEvent;
+use Laminas\View\Model\ViewModel;
+use Shorturl\Model\Admin2Domain;
+use Shorturl\Model\Admins2DomainsTable;
+use Shorturl\Model\DomainsProvider;
+use Shorturl\Model\ShorturlHistory;
+use Shorturl\Model\ShorturlsHistoryTable;
+use Shorturl\Model\ShorturlsTable;
+
+class AdminController extends AbstractActionController
+{
+    private $usersTable;
+    private $domainsProvider;
+    private $admins2DomainsTable;
+    private $authService;
+    private $user;
+    private $shorturlsTable;
+    private $histroyTable;
+    private $config;
+
+    public function __construct(
+        UsersTable $usersTable,
+        DomainsProvider $domainsProvider,
+        Admins2DomainsTable $admins2DomainsTable,
+        AuthenticationService $authService,
+        ShorturlsTable $shorturlsTable,
+        ShorturlsHistoryTable $historyTable,
+        array $config
+    ) {
+        $this->usersTable = $usersTable;
+        $this->domainsProvider = $domainsProvider;
+        $this->admins2DomainsTable = $admins2DomainsTable;
+        $this->authService = $authService;
+        $this->user = $this->authService->getIdentity();
+        $this->shorturlsTable = $shorturlsTable;
+        $this->historyTable = $historyTable;
+        $this->config = $config;
+    }
+
+    /**
+     * Called before every action
+     *
+     * @param MvcEvent $e
+     * @return void
+     */
+    public function onDispatch(MvcEvent $e)
+    {
+        $layoutView = $e->getApplication()->getMvcEvent()->getViewModel();
+        $layoutView->breadcrumbItems = array_merge($layoutView->breadcrumbItems, [['label' => 'Administrator', 'route' => 'admin']]);
+        parent::onDispatch($e);
+    }
+
+    /**
+     * Action to list and change user roles
+     *
+     * @return void
+     */
+    public function usersAction()
+    {
+        $this->layout()->showSearch = true;
+        $this->layout()->breadcrumbItems = array_merge($this->layout()->breadcrumbItems, [['label' => 'user']]);
+
+        if (!$this->user->isSuperAdmin()) {
+            return $this->redirect()->toRoute(
+                'admin',
+                ['action' => 'changeowner']
+            );
+        }
+
+        $domainParam = $this->params()->fromQuery('domain');
+
+        $q = $this->params()->fromQuery('q');
+        $q = trim(htmlspecialchars($q));
+        $q = preg_replace('/[\s,;]+/', ',', $q);
+        $searchTerms = empty($q) ? [] : explode(',', $q);
+
+        $page = (int) $this->params()->fromQuery('page', 1);
+        $page = ($page < 1) ? 1 : $page;
+
+        // change data of edited user
+        $userId = $this->params()->fromQuery('user_id');
+        if (!empty($userId)) {
+            try {
+                $userObj = $this->usersTable->getById($userId);
+                $userObj->superadmin = (bool) $this->params()->fromQuery('superadmin', false);
+                $userObj->admin = (bool) $this->params()->fromQuery('admin', false);
+                $this->usersTable->save($userObj);
+
+                if ($userObj->isAdmin()) {
+                    $selectedDomains = $this->params()->fromQuery('domains', []);
+                    $usersDomainIds = $this->admins2DomainsTable->getAdminDomainIds($userId);
+                    $remainingUserDomainIds = [];
+                    if (is_array($selectedDomains)) {
+                        foreach ($usersDomainIds as $userDomainId) {
+                            if (!in_array($userDomainId, $selectedDomains)) {
+                                $r = $this->admins2DomainsTable->deleteByUserIdAndDomainId($userId, $userDomainId);
+                            } else {
+                                $remainingUserDomainIds[] = $userDomainId;
+                            }
+                        }
+                    }
+                    if (!empty($selectedDomains)) {
+                        foreach ($selectedDomains as $domainId) {
+                            if (!in_array($domainId, $remainingUserDomainIds)) {
+                                $admin2DomainObj = new Admin2Domain();
+                                $admin2DomainObj->user_id = $userId;
+                                $admin2DomainObj->domain_id = $domainId;
+                                $this->admins2DomainsTable->save($admin2DomainObj);
+                            }
+                        }
+                    }
+                } else {
+                    $this->admins2DomainsTable->deleteByUserId($userObj->id);
+                }
+
+                $routeQueryParams = ['editedUserId' => $userObj->id];
+                if (!empty($q)) {
+                    $routeQueryParams['q'] = $q;
+                }
+
+                if (!empty($page)) {
+                    $routeQueryParams['page'] = $page;
+                }
+
+                if (!empty($domainParam)) {
+                    $routeQueryParams['domain'] = $domainParam;
+                }
+
+                return $this->redirect()->toRoute(
+                    'admin',
+                    ['action' => 'users'],
+                    ['query' => $routeQueryParams]
+                );
+            } catch (\Exception $e) {
+                // ignore errors
+            }
+        }
+
+        // prepare data for list
+        switch ($domainParam) {
+            case 'admins':
+                $paginator = $this->usersTable->findAdmins($searchTerms);
+                break;
+            case 'superadmins':
+                $paginator = $this->usersTable->findAdmins($searchTerms, true);
+                break;
+            default:
+                if ($domainParam === 'all') {
+                    $domainParam = null;
+                }
+                $paginator = $this->usersTable->findUsersByTermAndDomainPaginated($searchTerms, $domainParam);
+
+        }
+        $paginator->setCurrentPageNumber($page);
+        $itemsPerPage = (int) $this->config["admin"]["users"]["items_per_page"];
+        $paginator->setItemCountPerPage($itemsPerPage);
+
+        foreach ($paginator as $user) {
+            $user->adminDomains = $this->admins2DomainsTable->getAdminDomainIds($user->id);
+        }
+
+        $searchParams = [
+            'route' => 'admin',
+            'routeParams' => ['action' => 'users'],
+        ];
+
+        $viewParams = [
+            'page' => $page,
+            'domains' => $this->domainsProvider->fetchAll(),
+            'paginator' => $paginator,
+            'paginatorQuery' => [],
+        ];
+
+        $editedUserId = $this->params()->fromQuery('editedUserId');
+        if (!empty($editedUserId)) {
+            $viewParams['editedUserId'] = $editedUserId;
+        }
+
+        if (!empty($q)) {
+            $viewParams['q'] = $q;
+            $searchParams['q'] = str_replace(',', ' ', $q);
+            $viewParams['paginatorQuery']['q'] = $q;
+        }
+
+        if (!empty($domainParam)) {
+            $viewParams['domainParam'] = $domainParam;
+            $searchParams['routeQuery'] = ['domain' => $domainParam];
+            $viewParams['paginatorQuery']['domain'] = $domainParam;
+        }
+
+        $this->layout()->searchParams = $searchParams;
+
+        return new ViewModel($viewParams);
+    }
+
+    /**
+     * Show list of all shorturls with search and possibility to change the owner
+     *
+     * @return ViewModel
+     */
+    public function changeOwnerAction()
+    {
+        $this->layout()->showSearch = true;
+        $this->layout()->breadcrumbItems = array_merge($this->layout()->breadcrumbItems, [['label' => 'Change Owner']]);
+
+        $q = $this->params()->fromQuery('q');
+        $q = trim(htmlspecialchars($q));
+        $qTreated = preg_replace('/[\s,;]+/', ',', $q);
+        $searchTerms = empty($qTreated) ? [] : explode(',', $qTreated);
+
+        $page = (int) $this->params()->fromQuery('page', 1);
+        $page = ($page < 1) ? 1 : $page;
+
+        $savedOwner = (bool) $this->params()->fromQuery('savedOwner', false);
+
+        $ids = $this->params()->fromQuery("ids");
+        $uid = (int) $this->params()->fromQuery("uid");
+        if (!empty($ids) && !empty($uid)) {
+            $idsAsArray = explode(",", $ids);
+            try {
+                $user = $this->usersTable->getById($uid);
+            } catch (\Exception $e) {
+                // ignore if user is not found
+            }
+            foreach ($idsAsArray as $urlId) {
+                $urlId = (int) $urlId;
+                $shorturlObj = $this->shorturlsTable->getById($urlId);
+
+                $shorturlHistoryEntry = new ShorturlHistory();
+                $shorturlHistoryEntry->newFromShortUrl($shorturlObj);
+                $this->historyTable->save($shorturlHistoryEntry);
+
+                if ($shorturlObj->user_id !== $user->id) {
+                    $shorturlObj->user_id = $user->id;
+                    $shorturlObj->updated_by = $this->user->id;
+                    $shorturlObj->updated_at = date('Y-m-d H:i:s', time());
+                    $this->shorturlsTable->save($shorturlObj);
+                }
+            };
+
+            $redirectParams = ['savedOwner' => true];
+            if (!empty($q)) {
+                $redirectParams['q'] = $q;
+            }
+            if (!empty($page)) {
+                $redirectParams['page'] = $page;
+            }
+            return $this->redirect()->toRoute(
+                'admin',
+                ['action' => 'changeowner'],
+                ['query' => $redirectParams]
+            );
+        }
+
+        $paginator = $this->shorturlsTable->getShortUrlsBySearchTermPaginated($searchTerms);
+        $paginator->setCurrentPageNumber($page);
+        $itemsPerPage = (int) $this->config["admin"]["change_owners"]["items_per_page"];
+        $paginator->setItemCountPerPage($itemsPerPage);
+
+        $searchParams = [
+            'route' => 'admin',
+            'routeParams' => ['action' => 'changeowner'],
+        ];
+
+        $viewParams = [
+            'paginator' => $paginator,
+            'savedOwner' => $savedOwner,
+        ];
+
+        if (!empty($q)) {
+            $searchParams['q'] = $q;
+            $viewParams['paginatorQuery']['q'] = $q;
+        }
+
+        $this->layout()->searchParams = $searchParams;
+
+        return new ViewModel($viewParams);
+    }
+
+}

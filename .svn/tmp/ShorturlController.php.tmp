@@ -1,0 +1,65 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\View\Model\ViewModel;
+use Shorturl\Controller\AbstractActionController;
+use Shorturl\Model\DomainsTable;
+use Shorturl\Model\ShorturlsTable;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+<<<<<<< .mine
+    private $filters = [3 => 'All', 1 => 'Only my Urls', 2 => 'Only Shared Urls'];
+
+    public function __construct(Layout $layout, ShorturlsTable $shorturlTable, DomainsTable $domainsTable)
+||||||| .r17265
+=======
+    public function __construct(ShorturlsTable $shorturlTable, DomainsTable $domainsTable)
+>>>>>>> .r17279
+    {
+        $this->shorturlTable = $shorturlTable;
+        $this->domainsTable = $domainsTable;
+    }
+
+    public function indexAction()
+    {
+        $this->layout()->showSearch = true;
+
+        $queryParams = $this->getRequest()->getQuery();
+        $queryParams['order'] = $queryParams['order'] === "desc" ? "asc" : "desc";
+        if (empty($queryParams['filter'])) {
+            $queryParams['filter'] = 1;
+        };
+        if (empty($queryParams['domain'])) {
+            $queryParams['domain'] = '';
+        };
+
+        return new ViewModel([
+            'shorturls' => $this->shorturlTable->fetchList(30),
+            'queryParams' => $queryParams,
+            'domainParam' => empty($queryParams['domain']) ? '' : $queryParams['domain'],
+            'domains' => $this->domainsTable->fetchAll(),
+            'filter' => $queryParams['filter'],
+            'filters' => $this->filters,
+        ]);
+    }
+
+    public function filterAction()
+    {
+        return $this->indexAction();
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}

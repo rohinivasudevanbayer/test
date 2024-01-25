@@ -1,0 +1,29 @@
+<?php
+namespace Shorturl\Controller;
+
+use Shorturl\Model\ShorturlTable;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class RedirectController extends AbstractActionController
+{
+    private $table;
+
+    public function __construct(ShorturlTable $table)
+    {
+        $this->table = $table;
+    }
+
+    public function indexAction()
+    {
+        $urlCode = $this->params()->fromRoute('urlcode', false);
+        if ($urlCode) {
+            $url = $this->table->getActiveShortUrl($urlCode);
+            if ($url && !$url->isExpired()) {
+                $this->redirect()->toUrl($url->target_url);
+				return;
+            }
+        }
+        $this->redirect()->toRoute('gui');
+    }
+}

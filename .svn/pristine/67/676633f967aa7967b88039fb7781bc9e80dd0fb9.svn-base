@@ -1,0 +1,50 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\ServiceManager\ServiceManager;
+use Laminas\View\Model\ViewModel;
+use Shorturl\Model\ShorturlTable;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+    public function __construct(ServiceManager $serviceManager, ShorturlTable $table)
+    {
+        $this->serviceManager = $serviceManager;
+        $this->config = $this->serviceManager->get('configuration');
+        $this->session = $this->serviceManager->get('SessionContainer');
+        $this->table = $table;
+
+    }
+
+    public function indexAction()
+    {
+        // define layout options
+        $this->layout()->showLogout = false;
+        $this->layout()->showProfileLink = false;
+        $this->layout()->languages = $this->config['languages'];
+        $this->layout()->activeLanguage = $this->session->activeLanguage;
+
+        $queryParams = $this->getRequest()->getQuery();
+        $this->queryParams = $queryParams;
+        $this->domainParam = empty($queryParams['domain']) ? '' : $queryParams['domain'];
+
+        return new ViewModel([
+            'shorturls' => $this->table->fetchAll(),
+        ]);
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}

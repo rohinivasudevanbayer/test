@@ -1,0 +1,60 @@
+<?php
+namespace Shorturl\Model;
+
+class Shorturl
+{
+    public $id;
+    public $user_id;
+    public $short_url;
+    public $target_url;
+    public $url_code;
+    public $domain_id;
+    public $status;
+    public $visits;
+    public $qr_code_settings;
+    public $sent_reminder1;
+    public $sent_reminder2;
+    public $sent_expiration_notification;
+    public $created_at;
+    public $updated_at;
+    public $expiry_date;
+    public $updated_by;
+
+    public function exchangeArray(array $data)
+    {
+        $this->id = !empty($data['id']) ? (int) $data['id'] : null;
+        $this->user_id = !empty($data['user_id']) ? (int) $data['user_id'] : null;
+        $this->short_url = !empty($data['short_url']) ? $data['short_url'] : '';
+        $this->target_url = !empty($data['target_url']) ? $data['target_url'] : '';
+        $this->url_code = !empty($data['url_code']) ? $data['url_code'] : '';
+        $this->domain_id = !empty($data['domain_id']) ? (int) $data['domain_id'] : 0;
+        $this->status = !empty($data['status']) ? (int) $data['status'] : 1;
+        $this->visits = !empty($data['visits']) ? (int) $data['visits'] : 0;
+        $this->qr_code_settings = !empty($data['qr_code_settings']) ? $data['qr_code_settings'] : null;
+        $this->sent_reminder1 = !empty($data['sent_reminder1']) ? (int) $data['sent_reminder1'] : 0;
+        $this->sent_reminder2 = !empty($data['sent_reminder2']) ? (int) $data['sent_reminder2'] : 0;
+        $this->sent_expiration_notification = !empty($data['sent_expiration_notification']) ? (int) $data['sent_expiration_notification'] : 0;
+        $this->created_at = !empty($data['created_at']) ? $data['created_at'] : null;
+        $this->updated_at = !empty($data['updated_at']) ? $data['updated_at'] : null;
+        $this->expiry_date = !empty($data['expiry_date']) ? $data['expiry_date'] : null;
+        $this->updated_by = !empty($data['updated_by']) ? (int) $data['updated_by'] : 0;
+    }
+
+    public function isExpired()
+    {
+        return time() > strtotime($this->expiry_date);
+    }
+
+    public function limitTargetUrl()
+    {
+        if (strlen($this->target_url) > 50) {
+            return mb_substr($this->target_url, 0, 50) . '...';
+        }
+        return $this->target_url;
+    }
+
+    public function isOwnedBy(int $userId)
+    {
+        return (int) $this->user_id === $userId;
+    }
+}

@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * Local Configuration Override
+ *
+ * This configuration override file is for overriding environment-specific and
+ * security-sensitive configuration information. Copy this file without the
+ * .dist extension at the end and populate values as needed.
+ */
+
+return [
+    'db' => [
+        'driver' => 'Pdo',
+        'dsn' => 'mysql:dbname=' . $_SERVER['RDS_DB_NAME'] . ';host=' . $_SERVER['RDS_HOSTNAME'] . ';charset=utf8',
+        'username' => $_SERVER['RDS_USERNAME'],
+        'password' => $_SERVER['RDS_PASSWORD']
+    ],
+    'smtp' => [
+        'host' => 'email-smtp.eu-central-1.amazonaws.com',
+        'ssl' => 'tls',
+        'port' => 587,
+        'username' => 'ses-smtp-user.20200610-145423',
+        'password' => 'AKIA6ESYVXVZELUOHPHG,BKv0oy6BMY042GZqAhFDxa9hBPINtVDyQ+5fvX1Y/u07',
+    ],
+   'notification' => [
+        'from' => [
+            'name' => 'ShortUrl Admin',
+            'email' => 'short-url@dev.anti.design'
+        ]
+    ],
+    'contact_mail' => [
+        'sender' => [
+            'name' => 'Bayer ShortUrl',
+            'email' => 'no-reply@dev.anti.design',
+        ],
+        'receiver' => [
+            'name' => 'WebAS',
+            'email' => 'lars.lorenz.ext@bayer.com',
+        ],
+    ],
+];

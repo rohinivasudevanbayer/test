@@ -1,0 +1,68 @@
+<?php
+$title = $this->translate('Contact');
+$this->headTitle($title);
+$form->setAttributes(['class' => 'form']);
+
+$form->get('name')
+    ->setAttributes([
+        'autofocus' => true,
+    ])
+    ->setLabel($this->translate('Your Name'));
+
+$form->get('email')
+    ->setLabel($this->translate('E-Mail'));
+
+$form->get('subject')
+    ->setLabel($this->translate('Subject'));
+
+$form->get('message')
+    ->setLabel($this->translate('Message'));
+
+$form->get('submit')
+    ->setAttributes([
+        'class' => 'btn btn-primary submit-ajax-btn',
+        'value' => $this->translate('Submit-Contact'),
+    ]);
+
+$formRowHelper = $this->formRow();
+$formRowHelper->setInputErrorClass('error');
+$elementHelper = $this->formElement();
+$errorHelper = $this->formElementErrors();
+$errorHelper->setTranslateMessages(true);
+$errorHelper->setAttributes(['class' => 'errors']);
+
+$form->prepare();
+?>
+<h3><?=$title?></h3>
+<div class="well bs-component">
+    <?php if ($this->mailSent): ?>
+        <?php if ($this->success): ?>
+            <div class="alert alert-success">
+                <?=$this->translate("Thanks! Your email has been sent.")?>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-danger">
+                <?=$this->translate("An unknown error occurred when sending an email.")?>
+            </div>
+        <?php endif;?>
+    <?php else: ?>
+        <?php if ($form->hasValidated() && !$form->isValid()): ?>
+            <div class="alert alert-danger">
+                <?=$this->translate("There has been an error.")?>
+            </div>
+        <?php endif;?>
+        <div class="row">
+            <div class="col-xs-12">
+                <?=$this->form()->openTag($form);?>
+
+                <?php foreach (['name', 'email', 'subject', 'message'] as $elementName): ?>
+                    <?=$this->partial('partial/form_input.phtml', ['form' => $form, 'rowName' => $elementName])?>
+                <?php endforeach;?>
+
+                <?=$this->formElement($form->get('submit'));?>
+
+                <?=$this->form()->closeTag();?>
+            </div>
+        </div>
+    <?php endif;?>
+</div>

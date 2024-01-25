@@ -1,0 +1,21 @@
+<?php
+ob_start();
+global $langID;
+if (!empty($langID)) {
+    $oldLangID = $langID;
+}
+$langID = 'de';
+
+$content  = require BRANCH_PATH . 'scripts/components/shared/' . $langID . '/privacy-statement.php';
+
+$cookies = new TFW_BayerCookies();
+$cookies->hide(array('WHGUETTR', 'WTTimeIteration', 'WT_FPC', 'ACOOKIE'));
+$cookies->process();
+$cookieList = ob_get_clean();
+
+$content = str_replace('<!-- ##cookielist## -->', $cookieList, $content);
+
+if (!empty($oldLangID)) {
+    $langID = $oldLangID;
+}
+return $content;

@@ -1,0 +1,29 @@
+<?php
+declare (strict_types = 1);
+
+namespace Admin;
+
+use Laminas\Router\Http\Literal;
+
+return [
+    'router' => [
+        'routes' => [
+            'administrator' => [
+                'type' => Literal::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/admin',
+                    'defaults' => [
+                        'controller' => Controller\IndexController::class,
+                        'action' => 'users',
+                    ],
+                ],
+            ],
+        ],
+    ],
+    'view_manager' => [
+        'template_path_stack' => [
+            'admin' => __DIR__ . '/../view',
+        ],
+    ],
+];

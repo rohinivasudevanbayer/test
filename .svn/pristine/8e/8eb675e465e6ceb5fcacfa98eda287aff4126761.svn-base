@@ -1,0 +1,197 @@
+<div class="filter"></div>
+<div class="row view-header">
+    <div class="col col-xs-4">
+        <h3>
+            <?php if ($this->isSearchResult): ?>
+                <?=$this->translate('Search Result:') . " " . $this->escapeHtml($this->rowsCount) . " " . $this->translatePlural('match', 'matches', $this->rowsCount)?>
+            <?php else: ?>
+                <?=$this->translate('my shorturl list')?>
+            <?php endif;?>
+        </h3>
+    </div>
+    <div class="col col-xs-5">
+        <form class="form-inline">
+            <div class="row">
+                <div class="col-sm-6">
+                    <label><?=$this->translate('Filter')?></label>
+                    <select id="su-filter" class="default form-control input-sm">
+                        <?php foreach ($this->filters as $key => $filter): ?>
+                        <option <?=$this->filterParam == $key ? 'selected="1"' : ''?> value="<?=$this->escapeHtmlAttr($key)?>"><?=$this->escapeHtml($this->translate($filter))?></option>
+                        <?php endforeach;?>
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label><?=$this->translate('Domain')?>: </label>
+                    <select id="su-domains" class="default form-control input-sm" style="width: 150px">
+                        <option <?=$this->domainParam == 'all' ? 'selected="1"' : ''?> value="all"><?=$this->translate('All')?></option>
+                        <?php foreach ($this->domains as $domain): ?>
+                            <option <?=$this->domainParam == $domain->domain ? 'selected="1"' : ''?> value="<?=$domain->domain?>"><?=$domain->domain?> (<?=$domain->type?>)</option>
+                        <?php endforeach;?>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col col-xs-3 add-shorturl text-right">
+        <a role="button" class="btn-success btn" href="<?=$this->url('shorturl', ['action' => 'create'], ['query' => $this->queryParams])?>">
+            <span aria-hidden="true" class="glyphicon glyphicon-plus-sign" title="<?=$this->translate('create new shorturl')?>"></span>
+            <span class="hidden-xs hidden-sm"><?=$this->translate('create new shorturl')?></span>
+        </a>
+    </div>
+</div>
+<div class="row">
+    <div class="col col-md-12">
+        <?php if (null === $this->paginator || 0 === count($this->paginator)): ?>
+            <div class="alert alert-danger">
+                <p class="mb-5"><?=$this->translate('no data found')?></p>
+                <a class="btn btn-danger" href="<?=$this->url('shorturl')?>"><?=$this->translate('Cancel')?></a>
+            </div>
+        <?php else: ?>
+
+            <?php if (!empty($this->liid)): ?>
+            <div class="alert alert-success alert-dismissible">
+                <?=$this->translate('Short Url successfully created')?>
+                <button type="button" class="close" data-dismiss="alert" aria-label="<?=$this->translate('Close')?>">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <?php endif;?>
+            <?php if (!empty($this->luid)): ?>
+            <div class="alert alert-success alert-dismissible">
+                <?=$this->translate('Short Url successfully updated')?>
+                <button type="button" class="close" data-dismiss="alert" aria-label="<?=$this->translate('Close')?>">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <?php endif;?>
+            <?php if (!empty($this->deleted)): ?>
+            <div class="alert alert-success alert-dismissible">
+                <?=$this->translate('Short Url successfully deleted')?>
+                <button type="button" class="close" data-dismiss="alert" aria-label="<?=$this->translate('Close')?>">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <?php endif;?>
+            <table class="white-link table table-striped table-hover ">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>
+                        <a href="<?=$this->url('shorturl', [], [
+    'query' => array_merge($this->queryParams, [
+        'sort' => "short_url",
+        'order' => !empty($this->queryParams['sort']) && $this->queryParams['sort'] === 'short_url' && (empty($this->queryParams['order']) || $this->queryParams['order'] === 'desc') ? 'asc' : 'desc',
+    ])])?>">
+                            <?=$this->translate('Shorturl')?>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="<?=$this->url('shorturl', [], [
+    'query' => array_merge($this->queryParams, [
+        'sort' => "target_url",
+        'order' => !empty($this->queryParams['sort']) && $this->queryParams['sort'] === 'target_url' && (empty($this->queryParams['order']) || $this->queryParams['order'] === 'desc') ? 'asc' : 'desc',
+    ])])?>">
+                            <?=$this->translate('targeturl')?>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="<?=$this->url('shorturl', [], [
+    'query' => array_merge($this->queryParams, [
+        'sort' => "visits",
+        'order' => !empty($this->queryParams['sort']) && $this->queryParams['sort'] === 'visits' && (empty($this->queryParams['order']) || $this->queryParams['order'] === 'desc') ? 'asc' : 'desc',
+    ])])?>">
+                        <?=$this->translate('visits count')?>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="<?=$this->url('shorturl', [], [
+    'query' => array_merge($this->queryParams, [
+        'sort' => "status",
+        'order' => !empty($this->queryParams['sort']) && $this->queryParams['sort'] === 'status' && (empty($this->queryParams['order']) || $this->queryParams['order'] === 'desc') ? 'asc' : 'desc',
+    ])])?>">
+                            <?=$this->translate('Status')?>
+                        </a>
+                    </th>
+                    <th class="text-right"><?=$this->translate('actions')?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($this->paginator as $shorturl): ?>
+                <?php
+$isShared = (int) $this->filterParam === Shorturl\Model\ShorturlsTable::FILTER_SHARED && $this->layout()->user->id !== $shorturl->user_id;
+$expiryDateInSeconds = strtotime($shorturl->expiry_date);
+$isExpired = $expiryDateInSeconds < time();
+$willExpireSoon = !$isExpired && $expiryDateInSeconds < time() + $this->reminderWeeks * 604800; // weeks until expiration
+$userName = $isShared ? (empty($this->userNames[$shorturl->user_id]) ? $this->translate('unknown') : $this->userNames[$shorturl->user_id]) : '';
+?>
+                    <tr <?=($this->newShortUrlExists == $shorturl->id || $this->luid == $shorturl->id || $this->liid == $shorturl->id) ? 'style="background:#DFF0D8"' : ''?>>
+                        <td class="shared-status"><?php if ($isShared): ?><span aria-hidden="true" class="glyphicon glyphicon-user" title="<?=sprintf($this->translate('shared'), $this->escapeHtmlAttr($userName))?>" data-placement="right" data-toggle="tooltip"></span><?php endif;?></td>
+                        <td><a href="http://<?=$this->escapeHtmlAttr($shorturl->short_url)?>" target="_blank"><?=$this->escapeHtml($shorturl->short_url)?></a></td>
+                        <td><span title="<?=$this->escapeHtmlAttr($shorturl->target_url)?>"><?=$shorturl->limitTargetUrl()?></span></td>
+                        <td align="center">
+                            <a href="<?=$this->url('shorturl', ['action' => 'statistic'], ['query' => array_merge($this->queryParams, ['id' => $shorturl->id])])?>">
+                                <strong><?=$this->escapeHtml($shorturl->visits)?></strong>
+                            </a>
+                        </td>
+                        <td align="center">
+                            <?php if ($shorturl->status === 1 && !$isExpired && !$willExpireSoon): ?>
+                                <span aria-hidden="true" class="active-status glyphicon glyphicon-ok" data-toggle="tooltip" title="<?=$this->translate('Active')?>"></span>
+                            <?php elseif ($shorturl->status === 0): ?>
+                                <span aria-hidden="true" class="inactive-status glyphicon glyphicon-remove" data-toggle="tooltip" title="<?=$this->translate('Inactive')?>"></span>
+                            <?php elseif ($isExpired): ?>
+                                <span aria-hidden="true" class="expired-status glyphicon glyphicon-time" data-toggle="tooltip" title="<?=sprintf($this->translate('expired'), $shorturl->expiry_date)?>"></span>
+                            <?php elseif ($willExpireSoon): ?>
+                                <span aria-hidden="true" class="expiresoon-status glyphicon glyphicon-time" data-toggle="tooltip" title="<?=sprintf($this->translate('will expire soon'), $shorturl->expiry_date)?>"></span>
+                            <?php endif;?>
+                        </td>
+                        <td class="actions text-right">
+                            <?=$this->actionIcons($shorturl, $this->queryParams)?>
+                        </td>
+                    </tr>
+                <?php endforeach;?>
+                </tbody>
+            </table>
+            <?=$this->paginationControl(
+    $this->paginator, // paginator object
+    'sliding', // scrolling style
+    'partial/paginator', // partial
+    ['route' => 'shorturl', 'routeParams' => [], 'routeQuery' => $this->queryParams]// paginator partial variables
+)?>
+        <?php endif;?>
+    </div>
+</div>
+<script type="text/javascript">
+$(function () {
+    var makeFilterDomainRedirect = function() {
+        var filterValue = parseInt($('#su-filter').val());
+        var domainValue = $('#su-domains').val();
+        var searchValue = $('.search input[name=q]').val();
+        var sort = '<?=empty($this->queryParams['sort']) ? '' : $this->escapeJs($this->queryParams['sort'])?>';
+        var order = '<?=empty($this->queryParams['order']) ? '' : $this->escapeJs($this->queryParams['order'])?>';
+        var params = [];
+        if (filterValue > 0) {
+            params.push('filter=' + filterValue);
+        }
+        if (domainValue != '') {
+            params.push('domain=' + domainValue);
+        }
+        if ('string' === typeof searchValue && searchValue.length > 0) {
+            params.push('q=' + searchValue);
+        }
+        if (sort != '') {
+            params.push('sort=' + sort);
+        }
+        if (order != '') {
+            params.push('order=' + order);
+        }
+        var targetUrl = '<?=$this->url('shorturl')?>?' + params.join('&');
+        window.location.href = targetUrl;
+    };
+
+    $("#su-filter, #su-domains").on('change', function(){
+        makeFilterDomainRedirect();
+    });
+
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>

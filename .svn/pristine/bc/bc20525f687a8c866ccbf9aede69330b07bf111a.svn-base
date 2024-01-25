@@ -1,0 +1,29 @@
+<footer>
+    <div class="ifooter">
+        <div class="cright">Copyright &copy; Bayer AG</div>
+        <ul class="legal nvgtn">
+            <li><a href="<?php echo $this->url('static', ['action' => 'conditions-of-use']); ?>" title="<?=$this->translate('Conditions of Use')?>"><?=$this->translate('Conditions of Use')?></a></li>
+            <li><a href="<?php echo $this->url('static', ['action' => 'privacy-statement']); ?>" title="<?=$this->translate('Privacy Statement')?>"><?=$this->translate('Privacy Statement')?></a></li>
+            <li><a href="<?php echo $this->url('static', ['action' => 'imprint']); ?>" title="<?=$this->translate('Imprint')?>"><?=$this->translate('Imprint')?></a></li>
+            <li><a href="<?php echo $this->url('static', ['action' => 'contact']); ?>" title="<?=$this->translate('Contact')?>"><?=$this->translate('Contact')?></a></li>
+            <?php if ($this->layout()->isLoggedIn): ?>
+            <li><a href="<?php echo $this->url('administrator', ['action' => 'user']); ?>"><?=$this->translate('Administrator')?></a></li>
+            <li><a href="<?php echo $this->url('static', ['action' => 'documentation']); ?>"
+                   data-toggle="modal"
+                   data-target="#documentation"
+                >
+                    <?=$this->translate('Documentation')?>
+                </a>
+            </li>
+            <?php endif;?>
+            <li><a href="#top"><?=$this->translate('on Top');?></a></li>
+        </ul>
+        <?=$this->modal()->render(
+    "documentation",
+    $this->translate('Documentation'),
+    "Documentation"
+);
+?>
+</div>
+
+</footer>

@@ -1,0 +1,92 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+use Auth\Model\User;
+use Laminas\Db\ResultSet\ResultSetInterface;
+use Laminas\Db\Sql\Select;
+
+class ShorturlsTable extends AbstractTable
+{
+    const FILTER_ALL = 3;
+    const FILTER_MY = 1;
+    const FILTER_SHARED = 2;
+
+    const DOMAIN_ALL = 'All';
+
+    /**
+     * Retrieve an active shorturl with the given $domain and $urlCode if existing
+     *
+     * @param string $shorturl
+     * @return Shorturl | null
+     */
+    public function getActiveShorturl($shorturl): Shorturl
+    {
+        $rowset = $this->tableGateway->select([
+            'short_url' => $shorturl,
+            'status' => '1',
+        ]);
+        $row = $rowset->current();
+        return $row;
+    }
+
+    /**
+     * Filter shorturls
+     *
+     * @param integer $filter
+     *            The filter which set of shorturls to be retrieved
+     * @param string $domain
+     *            The domain the shorturls are assigned to
+     * @param User $identity
+     *            The currently logged in user
+     * @param integer $limit
+     *            The maximum amount of result rows
+     * @return array
+     */
+    public function getShortUrls($filter = self::FILTER_MY, $domain = self::DOMAIN_ALL, User $identity, $limit = 20): array
+    {
+        $selectFactory = function (Select $select) use ($identity, $filter, $limit) {
+            if ($filter == self::FILTER_MY) {
+                $select->where(['user_id' => $identity->id]);
+            } else if ($filter == self::FILTER_SHARED) {
+                // TODO: Filter shared domains
+            }
+            if ($limit > 0) {
+                $select->limit($limit);
+            }
+        };
+        $result = $this->tableGateway->select($selectFactory);
+        $shorturls = [];
+        foreach ($result as $row) {
+            $row->showFurtherActions = false;
+            if ($identity->superadmin == 1) {
+                $row->showFurtherActions = true;
+            } else if ($identity->admin == 1) {
+                // TODO: Check user domains
+
+            } else if ($identity->id == $row->user_id) {
+                $row->showFurtherActions = true;
+            }
+            // TODO: Check for shared urls
+            $shorturls[] = $row;
+        }
+        return $shorturls;
+    }
+
+    /**
+     * Fetches a list of shorturls
+     *
+     * @param integer $limit
+     *            The maximum amount of result rows
+     * @return ResultSetInterface
+     */
+    public function fetchList($limit = 0): ResultSetInterface
+    {
+        $selectFactory = function (Select $select) use ($limit) {
+            if ($limit > 0) {
+                $select->limit($limit);
+            }
+        };
+        return $this->tableGateway->select($selectFactory);
+    }
+}

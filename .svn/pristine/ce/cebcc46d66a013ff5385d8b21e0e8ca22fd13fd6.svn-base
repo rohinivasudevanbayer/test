@@ -1,0 +1,46 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Zend\View\Model\ViewModel;
+
+class IndexController extends AbstractActionController
+{
+    public function indexAction()
+    {
+    }
+
+    public function conditionsOfUseAction()
+    {
+        $this->layout()->breadcrumbItems = [...$this->layout()->breadcrumbItems, ['label' => 'Conditions of use']];
+    }
+
+    public function imprintAction()
+    {
+        $this->layout()->breadcrumbItems = [...$this->layout()->breadcrumbItems, ['label' => 'Imprint']];
+    }
+
+    public function privacyStatementAction()
+    {
+        $this->layout()->breadcrumbItems = [...$this->layout()->breadcrumbItems, ['label' => 'Privacy Statement']];
+    }
+
+    public function contactAction()
+    {
+        $this->layout()->breadcrumbItems = [...$this->layout()->breadcrumbItems, ['label' => 'Contact']];
+    }
+
+    public function documentationAction()
+    {
+        if ($this->request->isXmlHttpRequest()) {
+            $view = new ViewModel();
+            // disable layout
+            $view->setTerminal(true);
+            return $view;
+        } else {
+            $this->layout()->breadcrumbItems = [...$this->layout()->breadcrumbItems, ['label' => 'Documentation']];
+        }
+    }
+}

@@ -1,0 +1,54 @@
+<?php
+namespace Shorturl\View\Helper;
+
+use Laminas\View\Helper\AbstractHelper;
+
+class ActionIconsHelper extends AbstractHelper
+{
+    public function __invoke($shorturl)
+    {
+        $user = $this->getView()->layout()->user;
+
+        $content = '';
+
+        $actions = [
+            'info' => '<a
+                title="' . $this->getView()->translate('Information') . '"
+                href="' . $this->getView()->url('shorturl', ['action' => 'info', 'id' => $shorturl->id]) . '"
+                data-target="shorturl-info"
+                data-toggle="ajaxModal"
+                >
+                    <span aria-hidden="true" class="glyphicon glyphicon-info-sign"></span>
+                </a>',
+            'edit' => '<a title="' . $this->getView()->translate('Edit') . '" href="' . $this->getView()->url('shorturl', ['action' => 'edit', 'id' => $shorturl->id]) . '"><span aria-hidden="true" class="glyphicon glyphicon-pencil"></span></a>',
+            'delete' => '<a title="' . $this->getView()->translate('Delete') . '" href="' . $this->getView()->url('shorturl', ['action' => 'delete', 'id' => $shorturl->id]) . '"><span aria-hidden="true" class="glyphicon glyphicon-trash"></span></a>',
+            'state' => '<a title="' . ($shorturl->status == 1 ? $this->getView()->translate('active') : $this->getView()->translate('inactive')) . '" href="#" data-target="#' . $shorturl->id . '_modal" data-toggle="modal"><span aria-hidden="true" class="glyphicon glyphicon-ban-circle"></span></a>',
+            'qrcode' => '<a title="' . $this->getView()->translate('QR-Code') . '" href="' . $this->getView()->url('shorturl', ['action' => 'qrcode', 'id' => $shorturl->id]) . '"><span aria-hidden="true" class="glyphicon glyphicon-qrcode"></span></a>',
+            'revision' => '<a title="' . $this->getView()->translate('Revisions') . '" href="' . $this->getView()->url('shorturl', ['action' => 'revisions', 'id' => $shorturl->id]) . '"><span aria-hidden="true" class="glyphicon glyphicon-time"></span></a>',
+            'statistics' => '<a title="' . $this->getView()->translate('Statistic') . '" href="' . $this->getView()->url('shorturl', ['action' => 'statistics', 'id' => $shorturl->id]) . '"><span aria-hidden="true" class="glyphicon glyphicon-stats"></span></a>',
+        ];
+
+        $userCanAdminister = $user->isSuperAdmin(); // user is superadmin
+        if (!$userCanAdminister) {
+            if (in_array($shorturl->domain_id, $user->domainIds)) { // user is domain admin
+                $userCanAdminister = true;
+            } else {
+                if ($shorturl->user_id == $user->id) { // user is owner
+                    $userCanAdminister = true;
+                } else if (in_array($shorturl->id, $user->shorturlIds)) { // url is shared with user
+                    $userCanAdminister = true;
+                }
+            }
+        }
+
+        if (!$userCanAdminister) {
+            $actions = ['info' => $actions['info']];
+        }
+
+        foreach ($actions as $key => $action) {
+            $content .= $action . PHP_EOL;
+        };
+
+        return $content;
+    }
+}

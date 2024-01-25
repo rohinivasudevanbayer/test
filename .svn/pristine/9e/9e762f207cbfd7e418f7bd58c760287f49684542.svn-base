@@ -1,0 +1,149 @@
+<?php if (!empty($this->no_permission)): ?>
+<div class="row">
+    <div class="col-lg-12" id="generate-qr-code">
+        <div class="alert alert-danger">
+            <?=$this->translate($this->error)?>
+        </div>
+        <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>"
+        class="btn btn-default btn-back">
+            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+            <?=$this->translate('back')?>
+        </a>
+    </div>
+</div>
+<?php else: ?>
+<?php
+$qrCodeData = $this->shorturl->qr_code_settings;
+if (!empty($qrCodeData)) {
+    $qrCodeData = json_decode($qrCodeData);
+}
+?>
+            <h3><?=$this->translate('generate QR-Code for') . ' https://' . $this->shorturl->short_url?></h3>
+            <div class="row">
+                <div class="col-lg-12" id="generate-qr-code">
+                    <form method="post"
+                            action="<?=$this->url('shorturl', ['action' => 'downloadQrcode'])?>" class="inline-form">
+                        <input id="download-qrcode-imgdata" type="hidden" name="imgdata"/>
+                        <input id="download-qrcode-filename" type="hidden" name="filename"/>
+
+                        <div class="well bs-component">
+                            <label><?=$this->translate('width:')?></label>
+                            <input value="<?=isset($qrCodeData->width) ? $this->escapeHtmlAttr($qrCodeData->width) : 300?>" type="number"
+                                    class="number form-control" name="width">
+                            <span class="navbar-right-padding"></span>
+                            <span class="glyphicon glyphicon-link" aria-hidden="true" style="color: grey" id="link-dimensions" title="<?=$this->translate('link dimensions')?>"></span>
+                            <span class="navbar-right-padding"></span>
+                            <label><?=$this->translate('height:')?></label>
+                            <input value="<?=isset($qrCodeData->height) ? $this->escapeHtmlAttr($qrCodeData->height) : 300?>" type="number"
+                                    class="number form-control" name="height">
+                            <span class="navbar-right-padding"></span>
+                            <button name="save" class="btn btn-success" id="saveQrCodeBtn"><?=$this->translate('save')?></button>
+                            <span id="save-qrcode-response" class="alert alert-success" style="color: darkgreen; display: none"><?=$this->translate('saved')?></span>
+                        </div>
+
+                        <div class="well bs-component">
+                            <div id="qrcode" style="text-align: center"></div>
+                            <button name="download" class="btn btn-primary"><?=$this->translate('download')?></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="actions well bs-component">
+                <button name="cancel" class="btn btn-default" onclick="back()"><span class="glyphicon glyphicon-chevron-left mr-3" aria-hidden="true"></span><?=$this->translate('back')?></button>
+                <?=$this->actionIcons($this->shorturl, $this->queryParams, ['qrcode'])?>
+            </div>
+            <script type="text/javascript">
+            (function() {
+                var linked = false;
+
+                function getQrCodeData() {
+                    var $conQrWidth = $('input[name=width]');
+                    var $conQrHeight = $('input[name=height]');
+                    return {
+                        qrWidth: $conQrWidth.val(),
+                        qrHeight: $conQrHeight.val(),
+                        qrText: 'https://<?=$this->escapeJs($this->shorturl->short_url)?>'
+                    };
+                }
+
+                function generateQRCode() {
+                    var qrCodeData = getQrCodeData();
+                    var $qrCode = $('#qrcode');
+                    $qrCode.html(" ");
+                    $qrCode.qrcode({width: qrCodeData.qrWidth, height: qrCodeData.qrHeight, text: qrCodeData.qrText});
+                }
+
+                function downloadQrCode() {
+                    var canvas = document.getElementsByTagName('canvas');
+                    canvas = canvas.item(0);
+                    var imageData = canvas.toDataURL().replace('data:image/png;base64,', '');
+                    $('#download-qrcode-imgdata').val(imageData);
+                    $('#download-qrcode-filename').val(<?=json_encode($this->escapeJs($this->shorturl->url_code))?>);
+                    return true;
+                }
+
+                function saveQrCode() {
+                    var qrCodeData = getQrCodeData();
+                    $.post(<?=json_encode($this->url('shorturl', ['action' => 'updateQrCode']))?>,
+                        {
+                            width: qrCodeData.qrWidth,
+                            height: qrCodeData.qrHeight,
+                            id:<?=json_encode($this->shorturl->id)?>
+                        },
+                        function (data) {
+                            if (data.message === true){
+                                $('#save-qrcode-response').show();
+                                setTimeout(function() {
+                                    $('#save-qrcode-response').hide();
+                                }, 5000);
+                            }
+                        }
+                    )
+                    return false;
+                }
+
+                $('#link-dimensions').on('click', function() {
+                    if (linked) {
+                        $('input[name=width],input[name=height]').off('change');
+                        $('#link-dimensions').css('color', 'grey');
+                        linked = false;
+                    }
+                    else {
+                        $('input[name=width],input[name=height]').on('change', function() {
+                            var other;
+                            if (this.name == 'width') {
+                                other = $('input[name=height]');
+                            }
+                            else {
+                                other = $('input[name=width]');
+                            }
+                            other.val($(this).val());
+                        });
+                        $('#link-dimensions').css('color', 'green');
+                        linked = true;
+                    }
+                });
+
+                $("input[name=width],input[name=height]").on('keyup keypress blur change click', function () {
+                    generateQRCode();
+                });
+
+                $('#generate-qr-code form').on('submit', function() {
+                    return downloadQrCode();
+                });
+
+                $('#saveQrCodeBtn').on('click', function() {
+                    return saveQrCode();
+                });
+
+                document.back = function() {
+                    window.location.href='<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>';
+                    return false;
+                }
+
+                generateQRCode();
+
+            })();
+            </script>
+
+<?php endif;?>

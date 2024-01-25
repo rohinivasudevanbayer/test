@@ -1,0 +1,48 @@
+<?php
+namespace Shorturl\Controller;
+
+use Shorturl\Model\ShorturlTable;
+use Zend\Mvc\Controller\AbstractActionController;
+use Zend\View\Model\ViewModel;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+    public function __construct(ShorturlTable $table)
+    {
+        $this->table = $table;
+    }
+
+    public function indexAction()
+    {
+        return new ViewModel([
+            'shorturls' => $this->table->fetchAll(),
+        ]);
+    }
+
+    public function redirectAction()
+    {
+        //TODO: Check domain and search for domain and urlcode combination
+        $urlCode = $this->params()->fromRoute('urlcode', false);
+        if ($urlCode) {
+            $url = $this->table->getActiveShortUrl($urlCode);
+            if ($url && !$url->isExpired()) {
+                //TODO: Tracking
+                $this->redirect()->toUrl($url->target_url);
+            }
+        }
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}

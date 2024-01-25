@@ -1,0 +1,75 @@
+Resources:
+  sslSecurityGroupIngress: 
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: {"Fn::GetAtt" : ["AWSEBSecurityGroup", "GroupId"]}
+      IpProtocol: tcp
+      ToPort: 443
+      FromPort: 443
+      CidrIp: 0.0.0.0/0
+
+files:
+  "/etc/httpd/conf.d/vhostdev.conf":
+    mode: "000644"
+    owner: root
+    group: root
+    encoding: plain
+    content: |
+      <VirtualHost *:80>
+        ServerName shorturlaws.anti.design
+
+        SetEnv OIDC_CLAIM_given_name "Lars"
+        SetEnv OIDC_CLAIM_family_name "Lorenz"
+        SetEnv OIDC_CLAIM_email "lars.lorenz.ext@bayer.com"
+        
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+                
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        <Location /shorturl>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+      </VirtualHost>
+      
+      <VirtualHost *:443>
+        ServerName shorturl.dev01.anti.design
+
+        SSLEngine On
+        SSLProtocol -ALL +TLSv1 +TLSv1.2
+        SSLCompression Off
+        SSLSessionTickets on
+        SSLHonorCipherOrder off
+        SSLCipherSuite ECDH+AESGCM:ECDH+AES256:!aNULL:!MD5:!DSS:!DH:!AES128
+        SSLVerifyDepth 10
+        SSLCertificateFile /etc/ssl/shorturl.dev01.anti.design.crt
+        SSLCertificateKeyFile /etc/ssl/shorturl.dev01.anti.design.key
+        SSLCACertificateFile /etc/ssl/shorturl.dev01.anti.design_CA.pem
+        SSLCertificateChainFile /etc/ssl/shorturl.dev01.anti.design_chain.pem
+        
+        OIDCProviderMetadataURL https://login.microsoftonline.com/fcb2b37b-5da0-466b-9b83-0014b67a7c78/v2.0/.well-known/openid-configuration
+        OIDCClientID 42ec91b1-32c8-4859-93e9-d77d1ac4d5c2
+        OIDCClientSecret S9C0WI/nk1HvG8Q-FJKnyq]wI[e8cG8r
+        OIDCCryptoPassphrase xyfdaadadsaanyway
+        OIDCSessionInactivityTimeout 7200
+        OIDCRedirectURI https://shorturl.dev01.anti.design/shorturl/_return
+        
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+                
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        <Location /shorturl>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+      </VirtualHost>

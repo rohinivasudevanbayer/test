@@ -1,0 +1,87 @@
+<?php if ($this->pageCount): ?>
+<?php
+$routeQuery = empty($this->routeQuery) ? [] : $this->routeQuery;
+$routeParams = empty($this->routeParams) ? [] : $this->routeParams;
+?>
+<div class="text-center">
+  <ul class="pagination">
+
+    <!-- First page link -->
+    <?php if (isset($this->previous)): ?>
+    <li>
+        <a href="<?=$this->url($this->route, $routeParams, ['query' => array_merge($routeQuery, ['page' => $this->first])])?>" title="<?=$this->translate('First Page')?>">
+            <span class="glyphicon glyphicon-step-backward"></span>
+        </a>
+    </li>
+    <?php else: ?>
+    <li class="disabled">
+        <a href="#" title="<?=$this->translate('First Page')?>">
+            <span class="glyphicon glyphicon-step-backward"></span>
+        </a>
+    </li>
+    <?php endif;?>
+
+    <!-- Previous page link -->
+    <?php if (isset($this->previous)): ?>
+    <li>
+        <a href="<?=$this->url($this->route, $routeParams, ['query' => array_merge($routeQuery, ['page' => $this->previous])])?>" title="<?=$this->translate('Previous Page')?>">
+            <span class="glyphicon glyphicon-triangle-left"></span>
+        </a>
+    </li>
+    <?php else: ?>
+    <li class="disabled">
+        <a href="#" title="<?=$this->translate('Previous Page')?>">
+            <span class="glyphicon glyphicon-triangle-left"></span>
+        </a>
+    </li>
+    <?php endif?>
+
+    <!-- Numbered page links -->
+    <?php foreach ($this->pagesInRange as $page): ?>
+        <?php if ($page !== $this->current): ?>
+        <li>
+            <a href="<?=$this->url($this->route, $routeParams, ['query' => array_merge($routeQuery, ['page' => $page])])?>">
+                <?=$page?>
+            </a>
+        </li>
+        <?php else: ?>
+        <li class="active">
+            <a href="#"><?=$page?></a>
+        </li>
+        <?php endif?>
+    <?php endforeach?>
+
+    <!-- Next page link -->
+    <?php if (isset($this->next)): ?>
+        <li>
+            <a href="<?=$this->url($this->route, $routeParams, ['query' => array_merge($routeQuery, ['page' => $this->next])])?>" title="<?=$this->translate('Next Page')?>">
+                <span class="glyphicon glyphicon-triangle-right"></span>
+            </a>
+        </li>
+    <?php else: ?>
+        <li class="disabled">
+            <a href="#" title="<?=$this->translate('Next Page')?>">
+                <span class="glyphicon glyphicon-triangle-right"></span>
+            </a>
+        </li>
+    <?php endif?>
+
+    <!-- Last page link -->
+    <?php if (isset($this->next)): ?>
+        <li>
+            <a href="<?=$this->url($this->route, $routeParams, ['query' => array_merge($routeQuery, ['page' => $this->last])])?>" title="<?=$this->translate('Last Page')?>">
+                <span class="glyphicon glyphicon-step-forward"></span>
+            </a>
+        </li>
+    <?php else: ?>
+        <li class="disabled">
+            <a href="#" title="<?=$this->translate('Last Page')?>">
+                <span class="glyphicon glyphicon-step-forward"></span>
+            </a>
+        </li>
+    <?php endif;?>
+
+    </ul>
+</div>
+<div class="text-center"><?=$this->firstItemNumber;?> - <?=$this->lastItemNumber;?> <?=$this->translate('of')?> <?=$this->totalItemCount;?></div>
+<?php endif?>

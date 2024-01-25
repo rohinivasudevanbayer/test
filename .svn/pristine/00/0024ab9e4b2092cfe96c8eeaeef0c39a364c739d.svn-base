@@ -1,0 +1,248 @@
+<?php if (!empty($this->error)): ?>
+    <div class="alert alert-danger">
+        <?=$this->translate($this->error)?>
+    </div>
+<?php else: ?>
+<?php
+$this->headScript()
+    ->appendFile($this->basePath('js/bootstrap-components/datepicker/js/bootstrap-datepicker.min.js'))
+    ->appendFile($this->basePath('js/bootstrap-components/datepicker/locales/bootstrap-datepicker.' . $this->layout()->activeLanguage . '.min.js'))
+    ->appendFile($this->basePath('js/jquery.pie.js'))
+    ->appendFile($this->basePath('js/jquery.flot.time.js'))
+    ->appendFile($this->basePath('js/strftime.js'))
+    ->appendFile($this->basePath('js/jquery-ui/jquery-ui.min.js'));
+$this->headLink()
+    ->appendStylesheet($this->basePath('js/jquery-ui/jquery-ui.structure.min.css'))
+    ->appendStylesheet($this->basePath('js/jquery-ui/jquery-ui.theme.min.css'))
+    ->appendStylesheet($this->basePath('js/bootstrap-components/datepicker/css/bootstrap-datepicker3.min.css'));
+?>
+    <div class="filter">
+        <div class="row">
+            <div class="col-xs-9 col-sm-6">
+                <h4><?=$this->translate('Filter')?></h4>
+                <div class="input-daterange input-group" id="datepicker">
+                    <span class="input-group-addon"><?=$this->translate('Period:')?></span>
+                    <input value="<?=$this->escapeHtmlAttr($this->start)?>" type="text" class="input-sm form-control" name="start"/>
+                    <span class="input-group-addon"><?=$this->translate('to')?></span>
+                    <input value="<?=$this->escapeHtmlAttr($this->end)?>" type="text" class="input-sm form-control" name="end"/>
+                    <div class="input-group-btn">
+                        <button id="filter-date-btn" class="btn btn-primary btn-sm"><?=$this->translate('Show')?></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="add-new-url">
+        <div class="well" style="background: #fdffed; margin-top: 1rem;">
+            <div class="row">
+                <div class="col-xs-9 col-sm-6">
+                    <h4 style="margin-top: 0;"><?=$this->translate('Add ShortURL to compare:')?></h4>
+                    <div class="input-daterange input-group">
+                        <span class="input-group-addon"><span id="autocomplete-loading" class="glyphicon glyphicon-refresh glyphicon-refresh-animate mr-5" style="display:none"></span><?=$this->translate('Shorturl')?>: </span>
+                        <input
+                            id="find-short-url"
+                            autocomplete="off"
+                            value=""
+                            type="text"
+                            class="input-sm form-control"
+                            name="start"
+                        />
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div style="overflow: hidden;max-height: 208px;overflow-y: auto; margin-bottom: 0.5rem">
+                        <div style="display:none" id="selected_ids">
+                            <?php foreach ($this->shorturls as $shorturl): ?>
+                            <input type="hidden" id="input_<?=$shorturl->id?>" class="selected_ids_input" value="<?=$shorturl->id?>" />
+                            <?php endforeach;?>
+                        </div>
+                        <ul id="selected_urls">
+                            <?php foreach ($this->shorturls as $shorturl): ?>
+                            <li id="li_<?=$shorturl->id?>"><div><?=$this->escapeHtml($shorturl->short_url)?></div><span onclick="deleteSelectedIds(<?=$shorturl->id?>)"><i class="glyphicon glyphicon-remove-circle"></i></span></li>
+                            <?php endforeach;?>
+                        </ul>
+                    </div>
+                    <button id="add_to_statistic" style="float:right;display:<?=count($this->shorturls) > 0 ? 'block' : 'none'?>;" class="btn btn-primary btn-sm"><?=$this->translate('Update')?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br /> <br />
+    <div class="row table">
+        <div class="col col-md-12">
+            <div class="chart-container">
+                <div id="placeholder" class="chart-placeholder"></div>
+            </div>
+            <div id="tooltip"></div>
+            <span id="hoverdata"></span>
+            <span id="clickdata"></span>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function() {
+            $('.filter .input-daterange').datepicker({
+                autoclose: true,
+                toggleActive: true,
+                format: "yyyy-mm-dd",
+                language: "<?=$this->layout()->activeLanguage?>"
+            });
+
+            $('#filter-date-btn').on('click', function() {
+                var url = '<?=$this->url('shorturl', ['action' => 'statistics'])?>';
+                var params = QueryString.get();
+                params['ids'] = <?=json_encode($this->ids)?>;
+                params['start'] = $('input[name=start]').val();
+                params['end'] = $('input[name=end]').val();
+                url += QueryString.create(params)
+                window.location.href = url;
+            });
+
+            var dataRange = "<?=$this->dataRange?>";
+            var timeformat;
+            switch (dataRange) {
+                case 'days':
+                    timeformat = '%Y-%m-%d';
+                    tickSize = [7, 'day'];
+                    break;
+                case 'weeks':
+                    timeformat = '%Y-W%V';
+                    // timeformat = '%Y-%m-%d';
+                    tickSize = [7, 'day'];
+                    break;
+                case 'months':
+                    timeformat = '%Y-%m';
+                    tickSize = [1, 'month'];
+                    break;
+            }
+            var options = {
+                series: {
+                    lines: {
+                        show: true
+                    },
+                    points: {
+                        show: true
+                    },
+                },
+                xaxis: {
+                    mode: "time",
+                    timeBase: "milliseconds",
+                    timeformat: timeformat,
+                    tickSize: tickSize
+                },
+                grid: {
+                    hoverable: true
+                }
+            };
+
+            var data = <?=$this->data?>;
+            $.plot("#placeholder", data, options);
+
+            $(window).on('resize', function() {
+                $.plot("#placeholder", data, options);
+            });
+
+            $("#tooltip").css({
+                position: "absolute",
+                display: "none",
+                border: "1px solid #fdd",
+                padding: "2px",
+                "background-color": "#fee",
+                opacity: 0.80
+            }).appendTo("body");
+
+            $("#placeholder").bind("plothover", function(event, pos, item) {
+                if (item) {
+                    var x = item.datapoint[0];
+                    var y = item.datapoint[1];
+                    var d = new Date(x);
+
+                    $("#tooltip").html(d.strftime(options.xaxis.timeformat) + "<br/><?=$this->translate('Visits:')?> " + y)
+                        .css({top: item.pageY + 10, left: item.pageX + 10})
+                        .fadeIn(200);
+                } else {
+                    $("#tooltip").hide();
+                }
+
+            });
+
+            $("#find-short-url").autocomplete({
+                source: function(request, response) {
+                    $('#autocomplete-loading').show();
+                    $.ajax({
+                        url: <?=json_encode($this->url('shorturl', ['action' => 'urlList'], ['query' => $this->queryParams]))?>,
+                        dataType: "json",
+                        data: {
+                            q: request.term
+                        },
+                        success: function(data) {
+                            response(data);
+                            $('#autocomplete-loading').hide();
+                        },
+                        error: function(err) {
+                            // console.log("Error" +  err);
+                            $('#autocomplete-loading').hide();
+                        }
+                    });
+                },
+                minLength: 3,
+                delay: 300,
+                select: function(event, ui) {
+                    var selectedIds = getSelectedIds();
+                    if(selectedIds.indexOf(ui.item.value) > -1) {
+                        return;
+                    }
+                    $('#add_to_statistic').show();
+                    $('#selected_ids').append('<input id="input_'+ui.item.value+'" class="selected_ids_input" value="'+ui.item.value+'" />');
+                    $('#selected_urls').append('<li id="li_'+ui.item.value+'"><div>'+ui.item.label+'</div><span onclick="deleteSelectedIds('+ui.item.value+')"><i class="glyphicon glyphicon-remove-circle"></i></span></li>');
+                },
+                open: function() {
+                    $(this).removeClass("ui-corner-all").addClass("ui-corner-top");
+                },
+                close: function() {
+                    var id = $('#find-short-url').val("");
+                    $(this).removeClass("ui-corner-top").addClass("ui-corner-all");
+                }
+            });
+
+            function onlyUnique(value, index, self) {
+                return self.indexOf(value) === index;
+            }
+
+            $('#add_to_statistic').on('click', function() {
+                var ids = getSelectedIds();
+                var url = <?=json_encode($this->url('shorturl', ['action' => 'statistics']))?>;
+                var params = QueryString.get();
+                params['ids'] = ids.filter(onlyUnique).join();
+                <?php if ($this->start): ?>
+                params['start'] = <?=json_encode($this->start)?>;
+                <?php endif;?>
+                <?php if ($this->end): ?>
+                params['end'] = <?=json_encode($this->end)?>;
+                <?php endif;?>
+                location.href = url + QueryString.create(params);
+            });
+        });
+
+        function deleteSelectedIds(e) {
+            $('#input_' + e).remove();
+            $('#li_' + e).remove();
+            if (getSelectedIds().length == 0 ) {
+                $('#add_to_statistic').hide();
+            }
+        }
+
+        function getSelectedIds() {
+            var idsInput = $.find('.selected_ids_input');
+            var ids = [];
+            $(idsInput).each(function(element) {
+                ids.push(this.value)
+            });
+            return ids;
+        }
+    </script>
+<?php endif;?>
+<a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>" class="btn btn-default btn-back">
+    <span class="glyphicon glyphicon-chevron-left mr-3" aria-hidden="true"></span><?=$this->translate('back')?>
+</a>

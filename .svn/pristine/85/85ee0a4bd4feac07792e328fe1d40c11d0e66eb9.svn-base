@@ -1,0 +1,36 @@
+<?php
+namespace Auth\Model;
+
+class User
+{
+    public $id;
+    public $password = '';
+    public $name;
+    public $firstname;
+    public $email;
+    public $notifynotfound = 0;
+    public $admin = 0;
+    public $superadmin = 0;
+    public $created_at;
+    public $notification_date;
+
+    public function exchangeArray(array $data)
+    {
+        $this->id = !empty($data['id']) ? $data['id'] : null;
+        $this->password = !empty($data['password']) ? $data['password'] : '';
+        $this->name = !empty($data['name']) ? $data['name'] : null;
+        $this->firstname = !empty($data['firstname']) ? $data['firstname'] : null;
+        $this->email = !empty($data['email']) ? $data['email'] : null;
+        $this->notifynotfound = !empty($data['notifynotfound']) ? $data['notifynotfound'] : 0;
+        $this->admin = !empty($data['admin']) ? $data['admin'] : 0;
+        $this->superadmin = !empty($data['superadmin']) ? $data['superadmin'] : 0;
+        $this->created_at = !empty($data['created_at']) ? $data['created_at'] : null;
+        $this->notification_date = !empty($data['notification_date']) ? $data['notification_date'] : null;
+    }
+
+    public function __toString()
+    {
+        return $this->email;
+    }
+
+}

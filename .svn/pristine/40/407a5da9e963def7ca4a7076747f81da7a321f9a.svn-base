@@ -1,0 +1,92 @@
+<?php
+namespace Auth\Controller;
+
+use Auth\Form\LoginForm;
+use Laminas\Authentication\Result;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\Uri\Uri;
+use Laminas\View\Model\ViewModel;
+
+class AuthController extends AbstractActionController
+{
+    protected $usersTable;
+    protected $authManager;
+
+    public function __construct($usersTable, $authManager)
+    {
+        $this->usersTable = $usersTable;
+        $this->authManager = $authManager;
+    }
+
+    public function loginAction()
+    {
+        $this->layout()->breadcrumbItems = [$this->layout()->breadcrumbItems, ['label' => 'Login']];
+        $redirectUrl = (string) $this->params()->fromQuery('redirectUrl', '');
+        if (strlen($redirectUrl) > 2048) {
+            throw new \Exception("Too long redirectUrl argument passed");
+        }
+
+        $form = new LoginForm();
+        $form->get('redirect_url')->setValue($redirectUrl);
+
+        if ($this->authManager->isLoggedIn()) {
+            if (empty($redirectUrl)) {
+                return $this->redirect()->toRoute('home');
+            } else {
+                $uri = new Uri($redirectUrl);
+                if (!$uri->isValid() || $uri->getHost() != null) {
+                    throw new \Exception('Incorrect redirect URL: ' . $redirectUrl);
+                }
+                return $this->redirect()->toUrl($redirectUrl);
+            }
+        }
+
+        $isLoginError = false;
+
+        if ($this->getRequest()->isPost()) {
+
+            $data = $this->params()->fromPost();
+            $form->setData($data);
+            if ($form->isValid()) {
+                $data = $form->getData();
+
+                $result = $this->authManager->login($data['email'], $data['password']);
+
+                if ($result->getCode() == Result::SUCCESS) {
+
+                    $redirectUrl = $this->params()->fromPost('redirect_url', '');
+
+                    if (!empty($redirectUrl)) {
+                        $uri = new Uri($redirectUrl);
+                        if (!$uri->isValid() || $uri->getHost() != null) {
+                            throw new \Exception('Incorrect redirect URL: ' . $redirectUrl);
+                        }
+                    }
+
+                    if (empty($redirectUrl)) {
+                        return $this->redirect()->toRoute('home');
+                    } else {
+                        $this->redirect()->toUrl($redirectUrl);
+                    }
+                } else {
+                    $isLoginError = true;
+                }
+            } else {
+                $isLoginError = true;
+            }
+        }
+
+        return new ViewModel([
+            'form' => $form,
+            'isLoginError' => $isLoginError,
+            'redirectUrl' => $redirectUrl,
+        ]);
+    }
+
+    public function logoutAction()
+    {
+        $this->authManager->logout();
+
+        return $this->redirect()->toRoute('login');
+    }
+}

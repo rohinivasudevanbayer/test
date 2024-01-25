@@ -1,0 +1,57 @@
+<?php
+namespace Shorturl\View\Helper;
+
+use Auth\Model\UsersTable;
+use Laminas\View\Helper\AbstractHelper;
+use Shorturl\Model\ShortUrl;
+
+class ActionIconsHelper extends AbstractHelper
+{
+    private $usersTable;
+
+    public function __construct(UsersTable $usersTable)
+    {
+        $this->usersTable = $usersTable;
+    }
+
+    public function __invoke(ShortUrl $shorturl, array $queryParams = [], array $disabledIcons = [])
+    {
+        $content = '';
+
+        $user = $this->getView()->layout()->user;
+        if (!$this->usersTable->hasPermission($user, $shorturl)) {
+            $disabledIcons = array_unique(array_merge($disabledIcons, ['edit', 'delete', 'state', 'qrcode', 'revision', 'statistics']));
+        }
+
+        $actions = [
+            'info' => '<a
+                title="' . $this->getView()->translate('Information') . '"
+                href="' . $this->getView()->url('shorturl', ['action' => 'info', 'id' => $shorturl->id], ['query' => $queryParams]) . '"
+                data-target="shorturl-info"
+                data-toggle="ajaxModal"
+                >
+                    <span aria-hidden="true" class="glyphicon glyphicon-info-sign"></span>
+                </a>',
+            'edit' => '<a title="' . $this->getView()->translate('Edit') . '" href="' . $this->getView()->url('shorturl', ['action' => 'edit', 'id' => $shorturl->id], ['query' => $queryParams]) . '"><span aria-hidden="true" class="glyphicon glyphicon-pencil"></span></a>',
+            'delete' => '<a title="' . $this->getView()->translate('Delete') . '" href="' . $this->getView()->url('shorturl', ['action' => 'delete', 'id' => $shorturl->id], ['query' => $queryParams]) . '"><span aria-hidden="true" class="glyphicon glyphicon-trash"></span></a>',
+            'state' => '<a
+                title="' . ($shorturl->status == 1 ? $this->getView()->translate('deactivate') : $this->getView()->translate('activate')) . '"
+                href="' . $this->getView()->url('shorturl', ['action' => 'state', 'id' => $shorturl->id], ['query' => $queryParams]) . '"
+                data-target="shorturl-state"
+                data-toggle="ajaxModal">
+                    <span aria-hidden="true" class="glyphicon glyphicon-ban-circle"></span>
+                </a>',
+            'qrcode' => '<a title="' . $this->getView()->translate('QR-Code') . '" href="' . $this->getView()->url('shorturl', ['action' => 'qrcode', 'id' => $shorturl->id], ['query' => $queryParams]) . '"><span aria-hidden="true" class="glyphicon glyphicon-qrcode"></span></a>',
+            'revision' => '<a title="' . $this->getView()->translate('Revisions') . '" href="' . $this->getView()->url('shorturl', ['action' => 'revisions', 'id' => $shorturl->id], ['query' => $queryParams]) . '"><span aria-hidden="true" class="glyphicon glyphicon-time"></span></a>',
+            'statistics' => '<a title="' . $this->getView()->translate('Statistic') . '" href="' . $this->getView()->url('shorturl', ['action' => 'statistics'], ['query' => array_merge($queryParams, ['ids' => $shorturl->id])]) . '"><span aria-hidden="true" class="glyphicon glyphicon-stats"></span></a>',
+        ];
+
+        foreach ($actions as $key => $action) {
+            if (!in_array($key, $disabledIcons)) {
+                $content .= $action . PHP_EOL;
+            }
+        };
+
+        return $content;
+    }
+}

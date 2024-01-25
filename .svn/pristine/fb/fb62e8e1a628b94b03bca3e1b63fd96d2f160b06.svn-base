@@ -1,0 +1,61 @@
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderXmlHttpTop('shorturl-info', $this->translate('Shorturl Information'))?>
+<?php endif;?>
+<div id="error-box" style="display: none" class="alert alert-danger alert-dismissible">
+    <strong class="message"></strong>
+    <button type="button" class="close" data-dismiss="alert" aria-label="<?=$this->translate('Close')?>">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="shorturl-info">
+    <?php if (!empty($this->error)): ?>
+    <div class="alert alert-danger">
+        <?=$this->translate($this->error)?>
+    </div>
+    <?php else: ?>
+    <div class="table-responsive">
+        <table class="table table-bordered table-info">
+            <tr>
+                <td><?=$this->translate('Shorturl')?></td>
+                <th><a href="https://<?=$this->shorturl->short_url?>" target="_blank"><?=$this->escapeHtml($this->shorturl->short_url)?></a></th>
+            </tr>
+            <tr>
+                <td><?=$this->translate('Target Url')?></td>
+                <td><a href="<?=$this->shorturl->target_url?>" target="_blank"><?$this->escapeHtml($this->shorturl->target_url)?></a></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('created at')?></td>
+                <td><?=$this->shorturl->created_at?></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('Status')?></td>
+                <td><?=$this->translate($this->shorturl->status ? 'active' : 'inactive')?></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('visits')?></td>
+                <td><?=$this->shorturl->visits?></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('Owner')?></td>
+                <td><?=$this->escapeHtml($this->shorturlOwner->name . ', ' . $this->shorturlOwner->firstname)?> (<a href="mailto:'<?=$this->escapeHtmlAttr($this->shorturlOwner->email)?>"><?=$this->escapeHtml($this->shorturlOwner->email)?></a>)</td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('other users')?></td>
+                <td>
+                    <?php if (is_iterable($this->shorturlSharedUsers) && count($this->shorturlSharedUsers)): ?>
+                        <?php foreach ($this->shorturlSharedUsers as $user): ?>
+                            <?=$this->escapeHtml($user->name . ', ' . $user->firstname)?> (<a href="mailto:'<?=$this->escapeHtmlAttr($user->email)?>"><?=$this->escapeHtml($user->email)?></a>)<br />
+                        <?php endforeach;?>
+                    <?php endif;?>
+                </td>
+            </tr>
+        </table>
+        <?php if (!$this->isXmlHttpRequest): ?>
+        <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>" class="btn btn-default"><span class="glyphicon glyphicon-chevron-left mr-3" aria-hidden="true"></span><?=$this->translate('Back')?></a>
+        <?php endif;?>
+    </div>
+    <?php endif;?>
+</div>
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderXmlHttpBottom('shorturl-info', $this->translate('Close'))?>
+<?php endif;?>

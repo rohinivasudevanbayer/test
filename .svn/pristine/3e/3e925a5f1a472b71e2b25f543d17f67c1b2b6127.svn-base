@@ -1,0 +1,93 @@
+<?php
+namespace Auth\Service;
+
+use \Laminas\Authentication\AuthenticationService;
+use \Laminas\Session\SessionManager;
+
+class AuthManager
+{
+    /**
+     * Authentication service.
+     * @var \Laminas\Authentication\AuthenticationService
+     */
+    private $authService;
+
+    /**
+     * Session manager.
+     * @var \Laminas\Session\SessionManager
+     */
+    private $sessionManager;
+
+    /**
+     * Contents of the 'access_filter' config key.
+     * @var array
+     */
+    private $config;
+
+    public function __construct(AuthenticationService $authService, SessionManager $sessionManager, array $config)
+    {
+        $this->authService = $authService;
+        $this->sessionManager = $sessionManager;
+        $this->config = $config;
+    }
+
+    public function isLoggedIn()
+    {
+        return $this->authService->hasIdentity();
+    }
+
+    public function getUser()
+    {
+        return $this->authService->getIdentity();
+    }
+
+    public function login($email, $password)
+    {
+        if ($this->authService->getIdentity() != null) {
+            throw new \Exception('Already logged in');
+        }
+
+        $authAdapter = $this->authService->getAdapter();
+        $authAdapter->setEmail($email);
+        $authAdapter->setPassword($password);
+        $result = $this->authService->authenticate();
+
+        return $result;
+    }
+
+    public function logout()
+    {
+        if ($this->authService->getIdentity() == null) {
+            throw new \Exception('The user is not logged in');
+        }
+
+        $this->authService->clearIdentity();
+    }
+
+    public function filterAccess($controllerName, $actionName)
+    {
+        if (isset($this->config['controllers'][$controllerName])) {
+            $items = $this->config['controllers'][$controllerName];
+            foreach ($items as $item) {
+                $actionList = $item['actions'];
+                $allow = $item['allow'];
+                if (is_array($actionList) && in_array($actionName, $actionList) || $actionList == '*') {
+                    if ($allow == '*') {
+                        return true;
+                    } else if ($allow == '@' && $this->authService->hasIdentity()) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (!$this->authService->hasIdentity()) {
+            return false;
+        }
+
+        // Permit access to this page.
+        return true;
+    }
+}

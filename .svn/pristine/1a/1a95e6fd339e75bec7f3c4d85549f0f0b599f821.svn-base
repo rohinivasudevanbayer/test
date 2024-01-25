@@ -1,0 +1,2 @@
+<h1><?=$this->translate('no permissions')?></h1>
+<p><?=$this->translate('no access')?></p>

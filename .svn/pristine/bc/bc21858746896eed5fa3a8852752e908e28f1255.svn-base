@@ -1,0 +1,76 @@
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderXmlHttpTop('revision-info', $this->translate('Revision Information'))?>
+<?php endif;?>
+<div id="error-box" style="display: none" class="alert alert-dismissable alert-danger">
+    <strong class="message"></strong>
+</div>
+<div class="revision-info">
+    <?php if (!empty($this->error)): ?>
+    <div class="alert alert-danger">
+        <?=$this->translate($this->error)?>
+    </div>
+    <?php else: ?>
+    <div class="table-responsive">
+        <table class="table table-bordered table-info">
+            <tr>
+                <td><?=$this->translate('Shorturl')?></td>
+                <th><a href="https://<?=$this->escapeHtmlAttr($this->revision->short_url)?>" target="_blank"><?=$this->escapeHtml($this->revision->short_url)?></a></th>
+            </tr>
+            <tr>
+                <td><?=$this->translate('Target Url')?></td>
+                <td><a href="<?=$this->escapeHtmlAttr($this->revision->target_url)?>" target="_blank"><?=$this->escapeHtml($this->revision->target_url)?></a></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('created at')?></td>
+                <td><?=$this->revision->created_at?></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('Status')?></td>
+                <td><?=$this->translate($this->revision->status ? 'active' : 'inactive')?></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('visits')?></td>
+                <td><?=$this->revision->visits?></td>
+            </tr>
+            <tr>
+                <td><?=$this->translate('Owner')?></td>
+                <td><?=$this->escapeHtml($this->shorturlOwner->name . ', ' . $this->shorturlOwner->firstname)?> (<a href="mailto:'<?=$this->escapeHtmlAttr($this->shorturlOwner->email)?>"><?=$this->escapeHtml($this->shorturlOwner->email)?></a>)</td>
+            </tr>
+            <?php if (!empty($this->revision->qr_code_settings)): ?>
+            <tr>
+                <td><?=$this->translate('QR code settings')?></td>
+                <td class="nopadding">
+                    <table class="table table-condensed nomargin">
+                    <tbody>
+                    <?php $qrCodeSettings = (array) json_decode($this->revision->qr_code_settings);?>
+                    <?php foreach ($qrCodeSettings as $settingName => $settingValue): ?>
+                        <tr><td><?=$this->translate($settingName)?></td><td><?=$this->escapeHtml($settingValue)?></td></tr>
+                    <?php endforeach;?>
+                    </tbody>
+                    </table>
+                </td>
+            </tr>
+            <?php endif;?>
+            <?php if (!empty($this->revision->updated_at)): ?>
+            <tr>
+                <td><?=$this->translate('updated at')?></td>
+                <td><?=$this->revision->updated_at?></td>
+            </tr>
+            <?php endif;?>
+            <tr>
+                <td><?=$this->translate('updated by')?></td>
+                <td>
+                    <?php if (!empty($this->updatedUser)): ?>
+                    <?=$this->escapeHtml($updatedUser->name . ', ' . $updatedUser->firstname)?> (<a href="mailto:'<?=$this->escapeHtmlAttr($updatedUser->email)?>"><?=$this->escapeHtml($updatedUser->email)?></a>)
+                    <?php else: ?>
+                    <?=$this->translate('unknown')?>
+                    <?php endif;?>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <?php endif;?>
+</div>
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderXmlHttpBottom('revision-info', $this->translate('Close'))?>
+<?php endif;?>

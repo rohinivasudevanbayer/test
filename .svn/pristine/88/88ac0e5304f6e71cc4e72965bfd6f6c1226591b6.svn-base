@@ -1,0 +1,146 @@
+<?php
+namespace Shorturl;
+
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\ResultSet\ResultSet;
+use Laminas\Db\TableGateway\TableGateway;
+use Laminas\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements ConfigProviderInterface
+{
+    public function getConfig()
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+
+    public function getServiceConfig()
+    {
+        return [
+            'factories' => [
+                Model\Admins2DomainsTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\Admins2DomainsTableGateway::class);
+                    return new Model\Admins2DomainsTable($tableGateway);
+                },
+                Model\Admins2DomainsTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\Admin2Domain());
+                    return new TableGateway('su_admins2domains', $dbAdapter, null, $resultSetPrototype);
+                },
+                Model\DomainsProvider::class => function ($container) {
+                    $domains = require realpath(__DIR__ . '/../../../data/domains.php');
+                    return new Model\DomainsProvider($domains);
+                },
+                Model\NotFoundTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\NotFoundTableGateway::class);
+                    return new Model\NotFoundTable($tableGateway);
+                },
+                Model\NotFoundTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\NotFound());
+                    return new TableGateway('su_notfound', $dbAdapter, null, $resultSetPrototype);
+                },
+                Model\ShorturlsTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\ShorturlsTableGateway::class);
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    return new Model\ShorturlsTable($tableGateway, $dbAdapter);
+                },
+                Model\ShorturlsTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\Shorturl());
+                    return new TableGateway('su_shorturls', $dbAdapter, null, $resultSetPrototype);
+                },
+                Model\ShorturlsHistoryTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\ShorturlsHistoryTableGateway::class);
+                    return new Model\ShorturlsHistoryTable($tableGateway);
+                },
+                Model\ShorturlsHistoryTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\ShorturlHistory());
+                    return new TableGateway('su_shorturls_history', $dbAdapter, null, $resultSetPrototype);
+                },
+                Model\Shorturls2UsersTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\Shorturls2UsersTableGateway::class);
+                    return new Model\Shorturls2UsersTable($tableGateway);
+                },
+                Model\Shorturls2UsersTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\Shorturl2User());
+                    return new TableGateway('su_shorturls2users', $dbAdapter, null, $resultSetPrototype);
+                },
+                Model\ShorturlVisitsTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\ShorturlVisitsTableGateway::class);
+                    $shorturlTable = $container->get(Model\ShorturlsTable::class);
+                    return new Model\ShorturlVisitsTable($tableGateway, $shorturlTable);
+                },
+                Model\ShorturlVisitsTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\ShorturlVisit());
+                    return new TableGateway('su_visits', $dbAdapter, null, $resultSetPrototype);
+                },
+                Model\BlacklistTable::class => function ($container) {
+                    $tableGateway = $container->get(Model\BlacklistTableGateway::class);
+                    return new Model\BlacklistTable($tableGateway);
+                },
+                Model\BlacklistTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype(new Model\Blacklist());
+                    return new TableGateway(Model\BlacklistTable::TABLENAME, $dbAdapter, null, $resultSetPrototype);
+                },
+            ],
+        ];
+    }
+
+    public function getControllerConfig()
+    {
+        return [
+            'factories' => [
+                Controller\RedirectController::class => function ($container) {
+                    return new Controller\RedirectController(
+                        $container->get(Model\ShorturlsTable::class),
+                        $container->get(Model\ShorturlVisitsTable::class),
+                        $container->get(Model\NotFoundTable::class)
+                    );
+                },
+                Controller\ShorturlController::class => function ($container) {
+                    return new Controller\ShorturlController(
+                        $container->get(Model\Admins2DomainsTable::class),
+                        $container->get(Model\ShorturlsTable::class),
+                        $container->get(Model\Shorturls2UsersTable::class),
+                        $container->get(Model\BlacklistTable::class),
+                        $container->get(\Auth\Model\UsersTable::class),
+                        $container->get(Model\ShorturlsHistoryTable::class),
+                        $container->get(Model\ShorturlVisitsTable::class),
+                        $container->get(Model\DomainsProvider::class),
+                        $container->get(AuthenticationService::class),
+                        $container->get('MvcTranslator'),
+                        $container->get('config')
+                    );
+                },
+            ],
+        ];
+    }
+
+    public function getViewHelperConfig()
+    {
+        return [
+            'aliases' => [
+                'actionIcons' => View\Helper\ActionIconsHelper::class,
+            ],
+            'factories' => [
+                View\Helper\ActionIconsHelper::class => function ($container) {
+                    return new View\Helper\ActionIconsHelper(
+                        $container->get(\Auth\Model\UsersTable::class)
+                    );
+                },
+            ],
+        ];
+    }
+}

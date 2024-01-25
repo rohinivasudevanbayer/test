@@ -1,0 +1,416 @@
+<?php
+namespace Shorturl\Controller;
+
+use Auth\Model\UsersTable;
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\Mvc\I18n\Translator;
+use Laminas\View\Model\JsonModel;
+use Laminas\View\Model\ViewModel;
+use Shorturl\Form\ShorturlForm;
+use Shorturl\Model\Admins2DomainsTable;
+use Shorturl\Model\BlacklistTable;
+use Shorturl\Model\DomainsProvider;
+use Shorturl\Model\Shorturl;
+use Shorturl\Model\Shorturls2UsersTable;
+use Shorturl\Model\ShorturlsTable;
+
+class ShorturlController extends AbstractActionController
+{
+    private $admins2DomainsTable;
+    private $shorturlsTable;
+    private $shorturls2UsersTable;
+    private $blacklistTable;
+    private $usersTable;
+    private $domainsProvider;
+    private $authService;
+    private $translator;
+    private $config;
+
+    private $filters = [
+        ShorturlsTable::FILTER_ALL => 'All',
+        ShorturlsTable::FILTER_MY => 'Only my Urls',
+        ShorturlsTable::FILTER_SHARED => 'Only Shared Urls',
+    ];
+
+    public function __construct(
+        Admins2DomainsTable $admins2DomainsTable,
+        ShorturlsTable $shorturlsTable,
+        Shorturls2UsersTable $shorturls2UsersTable,
+        BlacklistTable $blacklistTable,
+        UsersTable $usersTable,
+        DomainsProvider $domainsProvider,
+        AuthenticationService $authService,
+        Translator $translator,
+        $config
+    ) {
+        $this->shorturlsTable = $shorturlsTable;
+        $this->shorturls2UsersTable = $shorturls2UsersTable;
+        $this->blacklistTable = $blacklistTable;
+        $this->usersTable = $usersTable;
+        $this->domainsProvider = $domainsProvider;
+        $this->authService = $authService;
+        $this->user = $this->authService->getIdentity();
+        $this->translator = $translator;
+        $this->config = $config;
+        // TODO fix these unnecessary queries, only needed in some actions!
+        $this->user->domainIds = $admins2DomainsTable->getAdminDomainIds($this->user->id);
+        $this->user->shorturlIds = $shorturls2UsersTable->getShortUrlIdsByUser($this->user->id);
+    }
+
+    public function indexAction()
+    {
+        $this->layout()->showSearch = true;
+
+        $queryParams = $this->getRequest()->getQuery();
+        $queryParams['order'] = $queryParams['order'] === "desc" ? "asc" : "desc";
+
+        if (empty($queryParams['domain'])) {
+            $queryParams['domain'] = ShorturlsTable::DOMAIN_ALL;
+        };
+        $domainId = 0;
+        if (!empty($queryParams['domain'])) {
+            $domainId = $this->domainsProvider->getIdByDomain($queryParams['domain']);
+        }
+
+        $userIsAdmin = false;
+        if ($this->user->isSuperAdmin()) {
+            $userIsAdmin = true;
+        } else if ($domainId !== 0 && $this->user && $this->user->isAdmin()) {
+            if (in_array($domainId, $this->user->domainIds)) {
+                $userIsAdmin = true;
+            }
+        }
+        if ($userIsAdmin) {
+            $this->filters[ShorturlsTable::FILTER_ADMIN] = 'Admin';
+        }
+
+        if (empty($queryParams['filter']) || !array_key_exists($queryParams['filter'], $this->filters)) {
+            $queryParams['filter'] = ShorturlsTable::FILTER_MY;
+        };
+        if (empty($queryParams['offset'])) {
+            $queryParams['offset'] = 0;
+        };
+
+        $shorturls = [];
+        switch ($queryParams['filter']) {
+            case ShorturlsTable::FILTER_ALL:
+                $shorturls = $this->shorturlsTable->getSharedShortUrls($this->user->id, $this->user->shorturlIds, $domainId, true, $queryParams['offset']);
+                break;
+            case ShorturlsTable::FILTER_SHARED:
+                $shorturls = $this->shorturlsTable->getSharedShortUrls($this->user->id, $this->user->shorturlIds, $domainId, false, $queryParams['offset']);
+                break;
+            case ShorturlsTable::FILTER_ADMIN:
+                if ($userIsAdmin) {
+                    $shorturls = $this->shorturlsTable->getAllShortUrls($domainId, $queryParams['offset']);
+                    break;
+                }
+            default:
+                $shorturls = $this->shorturlsTable->getMyShortUrls($this->user->id, $domainId, $queryParams['offset']);
+                break;
+        }
+
+        return new ViewModel([
+            'shorturls' => $shorturls,
+            'user' => $this->user,
+            'queryParams' => $queryParams,
+            'domainParam' => $queryParams['domain'],
+            'filterParam' => $queryParams['filter'],
+            'domains' => $this->domainsProvider->fetchAll(),
+            'filters' => $this->filters,
+            'newShortUrlExists' => $this->getRequest()->getQuery('liid', false),
+        ]);
+    }
+
+    public function infoAction()
+    {
+        $this->layout()->showSearch = false;
+
+        $viewParams = [];
+
+        if ($this->request->isXmlHttpRequest()) {
+            $viewParams['isXmlHttpRequest'] = true;
+        } else {
+            $this->layout()->breadcrumbItems = array_merge($this->layout()->breadcrumbItems, [['label' => 'Information']]);
+        }
+
+        $shorturlId = $this->params()->fromRoute('id', null);
+        if (null === $shorturlId) {
+            $viewParams['error'] = 'ShortUrl ID not exists';
+        } else {
+            $shorturl = $this->shorturlsTable->getById($shorturlId);
+            $viewParams['shorturl'] = $shorturl;
+            $viewParams['shorturlOwner'] = $this->usersTable->getById($shorturl->user_id);
+            $viewParams['shorturlSharedUsers'] = $this->usersTable->getSharedUsersForShorturl($shorturlId);
+        }
+
+        $view = new ViewModel($viewParams);
+        if (!empty($viewParams['isXmlHttpRequest'])) {
+            // disable layout
+            $view->setTerminal(true);
+        }
+
+        return $view;
+    }
+
+    /**
+     * Shows the shorturl creation form and saves its contents in the DB
+     *
+     * @return void
+     */
+    public function createAction()
+    {
+        $this->layout()->showSearch = false;
+        $this->layout()->breadcrumbItems = array_merge($this->layout()->breadcrumbItems, [['label' => 'create']]);
+
+        $error = '';
+        $availableDomains = ['domains' => $this->domainsProvider->fetchAllWithIdsAsKeys()];
+        $form = new ShorturlForm($availableDomains);
+        $form->get('url_code')->setValue($this->createRandomUrlCode(5));
+        $form->get('expiry_date')->setValue(date('Y-m-d', strtotime(date("Y-m-d", time()) . " + 1 year")));
+
+        if ($this->getRequest()->isPost()) {
+            $data = $this->getRequest()->getPost();
+            if (isset($data['cancel'])) {
+                return $this->redirect()->toRoute('shorturl');
+            }
+
+            $form->setData($data);
+            if ($form->isValid()) {
+                $values = $form->getData();
+                $values['target_url'] = str_replace(' ', '%20', $values['target_url']); // fix target_urls which contain an invalid space
+                $values['domain'] = (int) $values['domains'];
+                $values['short_url'] = $this->domainsProvider->getById($values['domains'])->domain . '/' . trim($values['url_code']);
+                $values['user_id'] = (int) $this->user->id;
+                $values['qr_code_settings'] = json_encode(array(
+                    'height' => 220,
+                    'width' => 220,
+                    'text' => $values['short_url'],
+                ));
+                $values['updated_at'] = date('Y-m-d H:i:s', time());
+                $values['updated_by'] = $this->user->id;
+                try {
+                    $blacklistResult = $this->blacklistTable->findByUrlCodeAndDomainId($values['url_code'], $values['domain']);
+                    if (count($blacklistResult)) {
+                        $error = $this->translator->translate('Url is in Blacklist');
+                        return;
+                    }
+
+                    $shorturl = new Shorturl();
+                    $shorturl->exchangeArray($values);
+                    $shorturl = $this->shorturlsTable->save($shorturl);
+                    $lastInsertId = $shorturl->id;
+                    if ($lastInsertId === 0) {
+                        $error = $this->translator->translate('There has been an unknown error.');
+                    } else {
+                        return $this->redirect()->toRoute(
+                            'shorturl',
+                            ['action' => 'index'],
+                            ['query' => ['liid' => $lastInsertId]]
+                        );
+                    }
+                } catch (\Exception $e) {
+                    if (strstr($e->getMessage(), 'uniq_shorturl')) {
+                        $error = $this->translator->translate('This Short Url already exists');
+                    } else {
+                        $error = $this->translator->translate('There has been an error.');
+                    }
+                }
+            } else {
+                $error = $this->translator->translate('There has been an error.') . ':' . print_r($form->getMessages(), true);
+            }
+        }
+
+        return new ViewModel([
+            'domains' => $this->domainsProvider->fetchAll(),
+            'form' => $form,
+            'error' => $error,
+        ]);
+    }
+
+    /**
+     * Checks if the given shorturl in the given domain (both via query params) already exists.
+     * If existing it returns information about the shorturl and its owner
+     */
+    public function existsAction()
+    {
+        $urlCode = $this->getRequest()->getQuery('urlcode');
+        $domainId = $this->getRequest()->getQuery('domain');
+
+        $blackListResult = $this->blacklistTable->findByUrlCodeAndDomainId($urlCode, $domainId);
+        if (count($blackListResult)) {
+            return new JsonModel(['message' => 'blacklist']);
+        }
+
+        $existingShorturls = $this->shorturlsTable->findByUrlCodeAndDomainId($urlCode, $domainId);
+        if (count($existingShorturls)) {
+            $existingShorturl = $existingShorturls->current();
+            $existingShorturlOwner = $this->usersTable->getOwnerOfShorturl($existingShorturl->id);
+            if (null !== $existingShorturlOwner) {
+                $owner = [
+                    'name' => $existingShorturlOwner->name,
+                    'firstname' => $existingShorturlOwner->firstname,
+                    'email' => $existingShorturlOwner->email,
+                ];
+            } else {
+                $owner = [
+                    'name' => '',
+                    'firstname' => 'unknown',
+                    'email' => '',
+                ];
+            }
+            $result = [
+                'short_url' => $existingShorturl->short_url,
+                'target_url' => $existingShorturl->target_url,
+                'owner' => $owner,
+            ];
+            return new JsonModel(['message' => $result]);
+        }
+
+        return new JsonModel(['message' => false]);
+    }
+
+    /**
+     * Receives content of a png image via POST and sends it back to the browser as download.
+     * This is used for downloading browser generated QR code images.
+     *
+     * File content needs to be sent in $_POST['imgdata']
+     * Filename has to be in in $_POST['filename'], the resulting filename will be qrcode_<filename>.png e.g. qrcode_12345.png
+     */
+    public function downloadQrcodeAction()
+    {
+        if (!$this->getRequest()->isPost()) {
+            $this->getResponse()->setStatusCode(404);
+            return;
+        }
+
+        $post = $this->getRequest()->getPost();
+        if (!isset($post['imgdata']) || !isset($post['filename']) || isset($post['cancel'])) {
+            $this->getResponse()->setStatusCode(404);
+            return;
+        }
+        $imageData = $post['imgdata'];
+        $filename = $post['filename'];
+
+        header('Content-type: image/png');
+        header('Content-Disposition: attachment; filename="qrcode_' . $filename . '.png"');
+
+        $encoded = $imageData;
+        $encoded = str_replace(' ', '+', $encoded);
+        $decoded = base64_decode($encoded);
+
+        echo $decoded;
+        exit();
+    }
+
+    public function editAction()
+    {
+        $shorturlId = $this->params()->fromRoute('id', null);
+        try {
+            $shorturlObj = $this->shorturlsTable->getById($shorturlId);
+        } catch (\Exception $e) {
+            $this->getResponse()->setStatusCode(404);
+            return;
+        }
+
+        $this->layout()->showSearch = false;
+        $this->layout()->breadcrumbItems = array_merge($this->layout()->breadcrumbItems, [['label' => 'edit']]);
+
+        if (!$this->usersTable->hasPermission($this->user, $shorturlObj)) {
+            $error = $this->translator->translate("You don't have permission");
+            $showErrorOnly = true;
+            return new ViewModel([
+                'showErrorOnly' => true,
+                'error' => $error,
+            ]);
+        }
+
+        $availableDomains = ['domains' => $this->domainsProvider->fetchAllWithIdsAsKeys()];
+        $form = new ShorturlForm($availableDomains);
+
+        $reminderWeeks = (int) $this->config["reminder1"]["weeks_until_expiration"];
+        $expiryDateInSeconds = strtotime($shorturlObj->expiry_date);
+        $isExpired = $expiryDateInSeconds < time();
+        $willExpireSoon = !$isExpired && $expiryDateInSeconds < time() + $reminderWeeks * 604800; // weeks until expiration
+        $isOwner = $shorturlObj->isOwnedBy($this->user->id);
+        $showErrorOnly = false;
+        $error = '';
+        $shorturlId = $shorturlObj->id;
+
+        if ($this->getRequest()->isPost()) {
+            $data = $this->getRequest()->getPost();
+            if (isset($data['cancel'])) {
+                return $this->redirect()->toRoute('shorturl');
+            }
+            $form->setData($data);
+            if ($form->isValid()) {
+                $values = $form->getData();
+
+                try {
+                    // @todo create history entry
+
+                    $shorturlObj->target_url = str_replace(' ', '%20', $values['target_url']); // fix to be able to edit target_urls which contain an invalid space
+                    $shorturlObj->url_code = $values['url_code'];
+                    $shorturlObj->short_url = $this->domainsProvider->getById($values['domains'])->domain . '/' . trim($values['url_code']);
+                    // reset reminder flags if expiry_date has been changed
+                    if ($values['expiry_date'] !== $shorturlObj->expiry_date) {
+                        $shorturlObj->expiry_date = $values['expiry_date'];
+                        $shorturlObj->sent_reminder1 = 0;
+                        $shorturlObj->sent_reminder2 = 0;
+                        $shorturlObj->sent_expiration_notification = 0;
+                    }
+
+                    $shorturlObj->updated_by = $this->user->id;
+
+                    $result = $this->shorturlsTable->save($shorturlObj);
+
+                    if (!empty($result)) {
+                        return $this->redirect()->toRoute(
+                            'shorturl',
+                            ['action' => 'index'],
+                            ['query' => ['luid' => $shorturlId, 'page' => $this->getRequest()->getQuery('page', 0)]]
+                        );
+                    } else {
+                        $error = $this->translator->translate('There has been an unknown error.');
+                    }
+                } catch (Exception $e) {
+                    if (strstr($e->getMessage(), 'uniq_shorturl')) {
+                        $error = $this->translator->translate('This Short Url already exists');
+                    } else {
+                        $error = $this->translator->translate('There has been an error.');
+                    }
+                }
+            } else {
+                $error = $this->translator->translate('There has been an error.');
+            }
+        } else {
+            $form->setData((array) $shorturlObj);
+        }
+        return new ViewModel([
+            'form' => $form,
+            'error' => $error,
+            'isExpired' => $isExpired,
+            'willExpireSoon' => $willExpireSoon,
+            'isOwner' => $isOwner,
+        ]);
+    }
+
+    /**
+     * Createa a random string as default value for the shorturl creation form
+     *
+     * @param integer $length The length of the string to generate
+     * @return string
+     */
+    private function createRandomUrlCode(int $length = 5): string
+    {
+        $alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890';
+        $alphabetLength = strlen($alphabet);
+        $urlCode = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomPos = rand(0, $alphabetLength - 1);
+            $char = $alphabet[$randomPos];
+            $urlCode .= $char;
+        }
+        return $urlCode;
+    }
+}

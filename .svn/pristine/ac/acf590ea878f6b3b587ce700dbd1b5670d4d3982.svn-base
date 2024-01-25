@@ -1,0 +1,8 @@
+<div class="alert alert-danger text-center">
+<?php echo sprintf($this->translate('This ShortUrl does not exist.'), '<strong>' . $this->shorturl . '</strong>'); ?>
+</div>
+<a href="<?php echo $this->url('shorturl'); ?>"
+   class="btn btn-default btn-back">
+    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+    <?php echo $this->translate('back'); ?>
+</a>

@@ -1,0 +1,236 @@
+<?php
+$form->setAttributes(['class' => 'form']);
+
+$form->get('target_url')
+    ->setAttributes([
+        'autofocus' => true,
+    ]);
+
+$form->get('cancel')
+    ->setAttributes([
+        'id' => 'shorturl-cancel',
+        'class' => 'btn btn-default',
+        'value' => ucfirst($this->translate('Cancel')),
+    ]);
+
+$form->get('submit')
+    ->setAttributes([
+        'class' => 'btn btn-primary submit-ajax-btn',
+        'value' => ucfirst($this->translate('save')),
+    ]);
+
+$formRowHelper = $this->formRow();
+$formRowHelper->setInputErrorClass('error');
+$elementHelper = $this->formElement();
+$errorHelper = $this->formElementErrors();
+$errorHelper->setTranslateMessages(true);
+$errorHelper->setAttributes(['class' => 'errors']);
+
+$form->prepare();
+?>
+
+<h3><?=$this->translate('Create Short url')?></h3>
+<div class="row">
+    <div class="col-md-8">
+        <div class="well bs-component">
+
+            <?php if (!empty($this->error)): ?>
+                <div class="alert alert-danger">
+                    <?=$this->error?>
+                </div>
+            <?php endif;?>
+
+            <?=$this->form()->openTag($form)?>
+
+            <?php foreach (['target_url', 'domains', 'url_code', 'expiry_date', 'status'] as $elementName): ?>
+                <?=$this->partial('partial/form_input.phtml', ['form' => $form, 'rowName' => $elementName])?>
+            <?php endforeach;?>
+
+            <div class="form-actions">
+                <?=$this->formElement($form->get('cancel'))?>
+                <?=$this->formElement($form->get('submit'))?>
+            </div>
+
+            <?=$this->form()->closeTag()?>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <h4><?=$this->translate('Your generated url')?></h4>
+
+        <div id="url-loading">
+            <span class="loading-text"><?=$this->translate("loading")?></span>
+            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+        </div>
+
+        <div id="url-no-info"><?=$this->translate('No information')?></div>
+
+        <div class="generated-url spacer">
+            <div class="url-container" style="display: none;">
+                <span class="label label-success"><?=$this->translate('URL exists')?></span>
+                <span class="url"><span class="domain"></span>/<span class="urlcode"></span></span>
+            </div>
+        </div>
+
+        <div class="spacer" id="target-url" style="display: none">
+            <span class="label label-default"><?=$this->translate('Target Url')?></span>
+            <span class="target-url"></span>
+        </div>
+
+        <div class="spacer" id="owner-info" style="display: none">
+            <span class="label label-info"><?=$this->translate('Owner')?></span>
+            <span class="info"></span>
+        </div>
+
+        <div class="generate-qr-code" style="padding-top: 20px; display: none">
+            <h4><?=$this->translate('Your Generated QR-Code')?></h4>
+
+            <div id="qrcode"></div>
+            <form method="post" onsubmit="return downloadQrCode();"
+                  action="<?=$this->url('shorturl', ['action' => 'downloadQrcode'])?>">
+                <input id="download-qrcode-imgdata" type="hidden" name="imgdata"/>
+                <input id="download-qrcode-filename" type="hidden" name="filename"/>
+                <button class="btn btn-primary btn-xs"><?=$this->translate('download')?></button>
+            </form>
+        </div>
+
+
+    </div>
+</div>
+<script type="text/javascript">
+    //===============================================================================================================
+    // Domain Check
+    //===============================================================================================================
+    var loadingCounter = 0;
+    function refreshDomainCheck() {
+        var domains = {};
+        <?php foreach ($this->domains as $domain): ?>domains[<?=$domain->id?>] = '<?=$domain->domain?>';<?php endforeach;?>
+        var domainId = $('#domains').val();
+        var domain = domains[domainId];
+        var $urlContainer = $('.url-container');
+        var $loadingContainer = $('#url-loading');
+        var $ownerInfoContainer = $('#owner-info');
+        var $targetUrlContainer = $('#target-url');
+        var $noInfoContainer = $('#url-no-info');
+        var $shortUrlInput = $('#url_code');
+        var $submitBtn = $('#Submit');
+        var urlcode = $shortUrlInput.val();
+
+        $urlContainer.hide();
+        $ownerInfoContainer.hide();
+        $targetUrlContainer.hide();
+        generateQrCode();
+
+        if ('' === urlcode) {
+            $noInfoContainer.show();
+        } else {
+            $noInfoContainer.hide();
+            $loadingContainer.show();
+            loadingCounter++;
+            var encodedUrlcode = encodeURIComponent(decodeURIComponent(urlcode));
+
+            $.get('<?=$this->url('shorturl', ['action' => 'exists'])?>', {urlcode: encodedUrlcode, domain: domainId}, function (data) {
+                loadingCounter--;
+                if (0 !== loadingCounter) {
+                    return; // only show last result
+                }
+                $loadingContainer.hide();
+                if (urlcode != '') {
+                    $urlContainer.show();
+                }
+                if (data.message != false) {
+                    $shortUrlInput.addClass("ajax_input_error");
+                    $urlContainer.find('.label').removeClass('label-success');
+                    $urlContainer.find('.label').addClass('label-danger');
+
+                    $submitBtn.attr("disabled", "0");
+                    if (data.message === 'blacklist') {
+                        $urlContainer.find('.label').html('<?=$this->translate('Url is in Blacklist')?>');
+                        $urlContainer.find('.domain').html(domain);
+                        $urlContainer.find('.urlcode').html(encodedUrlcode);
+                    } else {
+                        $urlContainer.find('.label').html('<?=$this->translate('URL exists')?>');
+                        $urlContainer.find('.domain').html(domain);
+                        $urlContainer.find('.urlcode').html(encodedUrlcode);
+                        $targetUrlContainer.find('.target-url').html('<a target="_blank" href="' + data.message.target_url + '">' + data.message.target_url + '</a>');
+                        $targetUrlContainer.show();
+                        $ownerInfoContainer.show();
+
+                        var ownerHtml = data.message.owner.firstname + ' ' + data.message.owner.name;
+                        if ('' !== data.message.owner.email) {
+                            ownerHtml = '<a title="' + data.message.owner.email + '" href="mailto:' + data.message.owner.email + '">' + ownerHtml + '</a>';
+                        }
+                        $ownerInfoContainer.find('.info').html(ownerHtml);
+                    }
+                    generateQrCode();
+                } else {
+                    $shortUrlInput.removeClass("ajax_input_error");
+                    $urlContainer.find('.label').removeClass('label-danger');
+                    $urlContainer.find('.label').addClass('label-success');
+                    $urlContainer.find('.label').html('<?=$this->translate('URL is available')?>');
+                    $urlContainer.find('.domain').html(domain);
+                    $urlContainer.find('.urlcode').html(encodedUrlcode);
+                    $targetUrlContainer.hide();
+                    $ownerInfoContainer.hide();
+                    $ownerInfoContainer.find('.info').html(" ");
+                    $submitBtn.removeAttr("disabled");
+                    generateQrCode(domain, encodedUrlcode);
+                }
+            }).fail(function() {
+                loadingCounter--;
+            });
+        }
+    };
+
+    function delay(callback, ms) {
+        var timer = 0;
+        return function() {
+            var context = this;
+            var args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                callback.apply(context, args);
+            }, ms || 0);
+        };
+    }
+
+    $('#url_code').on('keyup', delay(refreshDomainCheck, 500));
+    $('#domains').on('change', delay(refreshDomainCheck, 500));
+
+    refreshDomainCheck();
+
+    //===============================================================================================================
+    // Generate QR-Code
+    //===============================================================================================================
+    function generateQrCode (domain = "", urlcode = "") {
+        var $qrCode = $('#qrcode');
+        $qrCode.html(" ");
+        if (domain.length && urlcode.length) {
+            var url = 'http://' + domain + '/' + urlcode;
+            $qrCode.qrcode({width: 220, height: 220, text: url});
+            $('.generate-qr-code').show();
+        } else {
+            $('.generate-qr-code').hide();
+        }
+    };
+
+    function downloadQrCode() {
+        var canvas = document.getElementsByTagName('canvas');
+        canvas = canvas.item(0);
+        var imageData = canvas.toDataURL().replace('data:image/png;base64,', '');
+        $('#download-qrcode-imgdata').val(imageData);
+        $('#download-qrcode-filename').val($('.urlcode').text());
+        return true;
+    };
+
+    $('#expiry_date').datepicker({
+        autoclose: true,
+        toggleActive: true,
+        format: "yyyy-mm-dd",
+        language: "<?=$this->layout()->activeLanguage?>"
+    });
+
+    $('#shorturl-cancel').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = '<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>';
+    });
+</script>

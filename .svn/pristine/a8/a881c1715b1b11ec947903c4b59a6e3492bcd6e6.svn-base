@@ -1,0 +1,24 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+
+class DomainsTable extends AbstractTable
+{
+    /**
+     * Retrieve id by given domain name
+     *
+     * @param string $domain
+     *            The domain name
+     * @return integer
+     */
+    public function getIdByDomain($domain): int
+    {
+        $rowset = $this->tableGateway->select(['domain' => $domain]);
+        $row = $rowset->current();
+        if ($row) {
+            return intval($row->id);
+        }
+        return 0;
+    }
+}

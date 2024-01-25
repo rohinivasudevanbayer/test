@@ -1,0 +1,10 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+
+class ShorturlVisitsTable extends AbstractTable
+{
+    /** @var string TABLENAME The name of the table */
+    const TABLENAME = 'su_visits';
+}

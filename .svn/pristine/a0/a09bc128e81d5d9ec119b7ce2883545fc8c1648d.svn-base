@@ -1,0 +1,72 @@
+<?php
+namespace Auth\Service;
+
+use Auth\Model\User;
+use Zend\Authentication\Adapter\AdapterInterface;
+use Zend\Authentication\Result;
+
+class AuthAdapter implements AdapterInterface
+{
+    /**
+     * User email.
+     * @var string
+     */
+    private $email;
+
+    /**
+     * Password
+     * @var string
+     */
+    private $password;
+
+    /**
+     * User table.
+     * @var
+     */
+    private $userTable;
+
+    /**
+     * Constructor.
+     */
+    public function __construct($userTable)
+    {
+        $this->userTable = $userTable;
+    }
+
+    /**
+     * Sets user email.
+     */
+    public function setEmail($email)
+    {
+        $this->email = $email;
+    }
+
+    /**
+     * Sets password.
+     */
+    public function setPassword($password)
+    {
+        $this->password = (string) $password;
+    }
+
+    /**
+     * Performs an authentication attempt.
+     */
+    public function authenticate()
+    {
+        $isAuthenticated = $this->userTable
+            ->authenticate($this->email, $this->password);
+
+        if (isAuthenticated) {
+            return new Result(
+                Result::SUCCESS,
+                $this->email,
+                ['Authenticated successfully.']);
+        }
+
+        return new Result(
+            Result::FAILURE_CREDENTIAL_INVALID,
+            null,
+            ['Invalid credentials.']);
+    }
+}

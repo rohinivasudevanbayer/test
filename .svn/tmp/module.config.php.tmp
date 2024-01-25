@@ -1,0 +1,72 @@
+<?php
+declare (strict_types = 1);
+
+namespace Shorturl;
+
+use Laminas\Router\Http\Segment;
+
+return [
+    'router' => [
+        'routes' => [
+            'redirect' => [
+                'type' => Segment::class,
+                'priority' => 5,
+                'options' => [
+                    'route' => '/:urlcode',
+                    'constraints' => [
+                        'urlcode' => '[a-zA-Z0-9_-]*',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\RedirectController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+<<<<<<< .mine
+            'gui-filter' => [
+||||||| .r17265
+=======
+            'shorturl' => [
+>>>>>>> .r17279
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+<<<<<<< .mine
+                    'route' => '/shorturl/filter/:filter/domain/:domain',
+                    'constraints' => [
+                        'filter' => '[0-9]',
+                        'domain' => '[a-zA-Z.]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ShorturlController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+            'gui' => [
+                'type' => Segment::class,
+                'priority' => 15,
+                'options' => [
+                    'route' => '/shorturl[/:action[/:id]]',
+||||||| .r17265
+=======
+                    'route' => '/shorturl/shorturl[/:action[/:id]]',
+>>>>>>> .r17279
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ShorturlController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+        ],
+    ],
+    'view_manager' => [
+        'template_path_stack' => [
+            'shorturl' => __DIR__ . '/../view',
+        ],
+    ],
+];

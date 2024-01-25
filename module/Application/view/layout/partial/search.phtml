@@ -1,0 +1,38 @@
+<li class="search last" style="position:relative">
+<?php
+$route = 'shorturl';
+$routeParams = [];
+$q = empty($this->q) ? '' : $this->q;
+$routeQuery = [];
+if (!empty($this->layout()->searchParams)) {
+    if (!empty($this->layout()->searchParams['route'])) {
+        $route = $this->layout()->searchParams['route'];
+    }
+    if (!empty($this->layout()->searchParams['routeParams'])) {
+        $routeParams = $this->layout()->searchParams['routeParams'];
+    }
+    if (!empty($this->layout()->searchParams['routeQuery'])) {
+        $routeQuery = array_merge($routeQuery, $this->layout()->searchParams['routeQuery']);
+        if (!empty($routeQuery['q'])) {
+            unset($routeQuery['q']);
+        }
+    }
+}
+$searchAction = $this->url($route, $routeParams);
+$cancelAction = $this->url($route, $routeParams, ['query' => $routeQuery]);
+?>
+    <form class="navbar-form navbar-right" role="search" action="<?=$searchAction?>">
+        <div class="input-group">
+            <input type="text" class="form-control input-sm" placeholder="<?=$this->translate('Search')?>" name="q" value="<?=$this->escapeHtmlAttr($q)?>">
+            <?php foreach ($routeQuery as $fieldName => $fieldValue): ?>
+                <input type="hidden" name="<?=$this->escapeHtmlAttr($fieldName)?>" value="<?=$this->escapeHtmlAttr($fieldValue)?>" />
+            <?php endforeach;?>
+            <div class="input-group-btn">
+                <button class="btn btn-sm btn-default" type="submit"><i class="glyphicon glyphicon-search"></i></button>
+                <?php if (!empty($q)): ?>
+                    <a href="<?=$cancelAction?>" class="btn btn-sm btn-default" name="reset" value="1" type="submit"><i class="glyphicon glyphicon-remove"></i></a>
+                <?php endif;?>
+            </div>
+        </div>
+    </form>
+</li>

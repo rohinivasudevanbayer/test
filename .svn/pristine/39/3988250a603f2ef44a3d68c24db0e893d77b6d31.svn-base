@@ -1,0 +1,60 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\ServiceManager\ServiceManager;
+use Laminas\View\Model\ViewModel;
+use Shorturl\Controller\AbstractActionController;
+use Shorturl\Model\DomainsTable;
+use Shorturl\Model\ShorturlTable;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+    public function __construct(ServiceManager $serviceManager, ShorturlTable $shorturlTable, DomainsTable $domainsTable)
+    {
+        $this->serviceManager = $serviceManager;
+        $this->config = $this->serviceManager->get('configuration');
+        $this->session = $this->serviceManager->get('SessionContainer');
+        $this->shorturlTable = $shorturlTable;
+        $this->domainsTable = $domainsTable;
+    }
+
+    public function indexAction()
+    {
+        // define layout options
+        $this->layout()->showLogout = false;
+        $this->layout()->showProfileLink = false;
+        $this->layout()->languages = $this->config['languages'];
+        $this->layout()->activeLanguage = $this->session->activeLanguage;
+        // $this->layout()->showSearch = true;
+
+        $queryParams = $this->getRequest()->getQuery();
+        $queryParams['order'] = $queryParams['order'] === "desc" ? "asc" : "desc";
+        if (empty($queryParams['filter'])) {
+            $queryParams['filter'] = '';
+        };
+        if (empty($queryParams['domain'])) {
+            $queryParams['domain'] = '';
+        };
+
+        return new ViewModel([
+            'shorturls' => $this->shorturlTable->fetchList(30),
+            'queryParams' => $queryParams,
+            'domainParam' => empty($queryParams['domain']) ? '' : $queryParams['domain'],
+            'domains' => $this->domainsTable->fetchAll(),
+        ]);
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}

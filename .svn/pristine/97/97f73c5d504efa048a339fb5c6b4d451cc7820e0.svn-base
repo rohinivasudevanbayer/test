@@ -1,0 +1,29 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+
+class Admins2DomainsTable extends AbstractTable
+{
+    /** @var string TABLENAME The name of the table */
+    const TABLENAME = 'su_admins2domains';
+
+    /**
+     * Check if given user is admin for given domain
+     *
+     * @param integer $userId
+     *            The id of the current logged in user
+     * @param integer $domainId
+     *            The id of the given domain
+     * @return boolean
+     */
+    public function isAdminForDomain($userId, $domainId): bool
+    {
+        $isAdmin = false;
+        $rowset = $this->tableGateway->select(['user_id' => $userId, 'domain_id' => $domainId]);
+        if ($rowset->count() > 0) {
+            $isAdmin = true;
+        }
+        return $isAdmin;
+    }
+}

@@ -1,0 +1,84 @@
+<?php
+declare (strict_types = 1);
+
+namespace Auth;
+
+use Laminas\Router\Http\Literal;
+use Laminas\Router\Http\Segment;
+
+return [
+    'router' => [
+        'routes' => [
+            'login' => [
+                'type' => Literal::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/login',
+                    'defaults' => [
+                        'controller' => Controller\AuthController::class,
+                        'action' => 'login',
+                    ],
+                ],
+            ],
+            'logout' => [
+                'type' => Literal::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/logout',
+                    'defaults' => [
+                        'controller' => Controller\AuthController::class,
+                        'action' => 'logout',
+                    ],
+                ],
+            ],
+            'auth' => [
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/auth[/:action]',
+                    'defaults' => [
+                        'controller' => Controller\AuthController::class,
+                        'action' => 'login',
+                    ],
+                ],
+            ],
+            'user' => [
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/auth[/:action]',
+                    'defaults' => [
+                        'controller' => Controller\UserController::class,
+                        'action' => 'profile',
+                    ],
+                ],
+            ],
+        ],
+    ],
+    'view_manager' => [
+        'template_path_stack' => [
+            'auth' => __DIR__ . '/../view',
+        ],
+    ],
+    'access_filter' => [
+        'controllers' => [
+            Application\IndexController::class => [
+                ['actions' => ['index'], 'allow' => '*'],
+            ],
+            ShortUrl\RedirectController::class => [
+                ['actions' => ['index'], 'allow' => '*'],
+            ],
+            Auth\AuthController::class => [
+                ['actions' => ['login'], 'allow' => '*'],
+                ['actions' => ['logout'], 'allow' => '@'],
+            ],
+            Auth\UserController::class => [
+                ['actions' => ['fullRegister', 'lostPassword'], 'allow' => '*'],
+            ],
+            ShortUrl\ShorturlController::class => [
+                ['actions' => ['index'], 'allow' => '@'],
+            ],
+        ],
+    ],
+
+];

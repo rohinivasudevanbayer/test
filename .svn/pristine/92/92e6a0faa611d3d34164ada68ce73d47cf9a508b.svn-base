@@ -1,0 +1,116 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application\Controller;
+
+use Application\Form\ContactForm;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class IndexController extends AbstractActionController
+{
+    protected $config;
+    protected $mailSender;
+
+    public function __construct($config, $mailSender)
+    {
+        $this->config = $config;
+        $this->mailSender = $mailSender;
+    }
+
+    public function indexAction()
+    {
+        // just display default view
+    }
+
+    public function conditionsOfUseAction()
+    {
+        $this->layout()->breadcrumbItems = [$this->layout()->breadcrumbItems, ['label' => 'Conditions of use']];
+    }
+
+    public function imprintAction()
+    {
+        $this->layout()->breadcrumbItems = [$this->layout()->breadcrumbItems, ['label' => 'Imprint']];
+    }
+
+    public function privacyStatementAction()
+    {
+        $this->layout()->breadcrumbItems = [$this->layout()->breadcrumbItems, ['label' => 'Privacy Statement']];
+    }
+
+    public function contactAction()
+    {
+        $this->layout()->breadcrumbItems = [$this->layout()->breadcrumbItems, ['label' => 'Contact']];
+        $this->layout()->showSearch = false;
+
+        $form = new ContactForm();
+
+        $mailSent = false;
+        $success = false;
+
+        if ($this->getRequest()->isPost()) {
+
+            $data = $this->params()->fromPost();
+            $form->setData($data);
+            if ($form->isValid()) {
+                $message = $this->array2html($form->getData());
+                $from = $this->config['contact_mail']['sender'];
+                $to = $this->config['contact_mail']['receiver'];
+                $subject = $this->config['contact_mail']['subject'];
+                $email = $form->getValue('Email');
+                $name = $form->getValue('Name');
+                if (empty($name)) {
+                    $name = $email;
+                }
+                $replyto = array('email' => $email, 'name' => $name);
+                $sent = $this->mailSender->sendMail($from, $to, $replyto, $subject, $message);
+                $mailSent = true;
+                if ($sent) {
+                    $form->setData([
+                        'name' => '',
+                        'email' => '',
+                        'subject' => '',
+                        'message' => '',
+                    ]);
+                    $success = true;
+                }
+            }
+        }
+
+        return new ViewModel([
+            'form' => $form,
+            'mailSent' => $mailSent,
+            'success' => $success,
+        ]);
+    }
+
+    public function documentationAction()
+    {
+        if ($this->request->isXmlHttpRequest()) {
+            $view = new ViewModel();
+            // disable layout
+            $view->setTerminal(true);
+            return $view;
+        } else {
+            $this->layout()->breadcrumbItems = [...$this->layout()->breadcrumbItems, ['label' => 'Documentation']];
+        }
+    }
+
+    /**
+     * Create a HTML representation of given array
+     *
+     * @param array $data
+     * @return string
+     */
+    private function array2html(array $data)
+    {
+        $message = '';
+        foreach ($data as $key => $value) {
+            if (is_array($value) || $key === 'submit') {
+                continue;
+            }
+            $message .= $key . ": " . nl2br($value) . " <br />";
+        }
+        return $message;
+    }
+}

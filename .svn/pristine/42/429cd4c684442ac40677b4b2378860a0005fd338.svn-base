@@ -1,0 +1,108 @@
+<?php
+declare(strict_types = 1);
+
+require_once 'Base.php';
+
+class SendReminder extends Base
+{
+
+    public function run()
+    {
+        $this->_sendRemindersBeforeExpiration();
+        $this->_sendReminderOnExpiration();
+    }
+
+    private function _sendRemindersBeforeExpiration()
+    {
+        for ($i = 1; $i <= 2; $i ++) {
+            $reminder = 'reminder' . $i;
+            if (! empty($this->config[$reminder]['active'])) {
+                $weeksUntilExpiration = $this->config[$reminder]['weeks_until_expiration'];
+                $limit = (int) $this->config[$reminder]['limit_per_run'];
+                $toOwner = (bool) $this->config[$reminder]['send_to_owner'];
+                $toShared = (bool) $this->config[$reminder]['send_to_shared'];
+                $filterField = 'sent_reminder' . $i;
+                $subjectKeyToOwner = 'Reminder' . $i . '-Owner-Mail-Subject';
+                $messageKeyToOwner = 'Reminder' . $i . '-Owner-Mail-Message';
+                $subjectKeyToShared = 'Reminder' . $i . '-Shared-Mail-Subject';
+                $messageKeyToShared = 'Reminder' . $i . '-Shared-Mail-Message';
+                $this->_sendReminders($filterField, $weeksUntilExpiration, $limit, $toOwner, $toShared, $subjectKeyToOwner, $messageKeyToOwner, $subjectKeyToShared, $messageKeyToShared);
+            }
+        }
+    }
+    
+    private function _sendReminderOnExpiration()
+    {
+        if (! empty($this->config['expiration_notification']['active'])) {
+            $weeksUntilExpiration = 0;
+            $limit = (int) $this->config['expiration_notification']['limit_per_run'];
+            $toOwner = (bool) $this->config['expiration_notification']['send_to_owner'];
+            $toShared = (bool) $this->config['expiration_notification']['send_to_shared'];
+            $filterField = 'sent_expiration_notification';
+            $subjectKeyToOwner = 'Expiration-Notification-Owner-Mail-Subject';
+            $messageKeyToOwner = 'Expiration-Notification-Owner-Mail-Message';
+            $subjectKeyToShared = 'Expiration-Notification-Shared-Mail-Subject';
+            $messageKeyToShared = 'Expiration-Notification-Shared-Mail-Message';
+            $this->_sendReminders($filterField, $weeksUntilExpiration, $limit, $toOwner, $toShared, $subjectKeyToOwner, $messageKeyToOwner, $subjectKeyToShared, $messageKeyToShared);
+        }
+    }
+    
+    private function _sendReminders($filterField, $weeksUntilExpiration, $limit, $toOwner, $toShared, $subjectKeyToOwner, $messageKeyToOwner, $subjectKeyToShared, $messageKeyToShared) {
+        $shortUrlIds = [];
+        if ($shortUrlsByUser = $this->dbh->query('SELECT DISTINCT(`user_id`),`id` FROM `su_shorturls` 
+                                                  WHERE `' . $filterField . '` = 0
+                                                    AND `expiry_date` - INTERVAL ' . $weeksUntilExpiration . ' WEEK <= NOW()
+                                                  ORDER BY `expiry_date`
+                                                  LIMIT 0,' . $limit)) {
+            foreach ($shortUrlsByUser as $shortUrlByUser) {
+                $userId = $shortUrlByUser['user_id'];
+                $shortUrlsString = '';
+                if ($toShared) {
+                    $shortUrlIds[] = $shortUrlByUser['id'];
+                }
+                if ($toOwner) {
+                    $shortUrls = $this->dbh->query('SELECT * FROM `su_shorturls` 
+                                                    WHERE `' . $filterField . '` = 0
+                                                      AND `expiry_date` - INTERVAL ' . $weeksUntilExpiration . ' WEEK <= NOW()
+                                                      AND `user_id` = ' . $userId . '
+                                                    ORDER BY `short_url`');
+                    foreach ($shortUrls as $shortUrl) {
+                        $shortUrlsString .= '<li>' . $shortUrl['short_url'] . '</li>';
+                        $this->dbh->query('UPDATE `su_shorturls`
+                                           SET `' . $filterField . '` = 1
+                                           WHERE `id` = ' . $shortUrl['id']);
+                    }
+                    if (!empty($shortUrlsString)) {
+                        $shortUrlsString = '<ul>' . $shortUrlsString . '</ul>';
+                        $this->_prepareAndSendReminder($userId, $subjectKeyToOwner, $messageKeyToOwner, $shortUrlsString, $weeksUntilExpiration);
+                    }
+                }
+            }
+        }
+        if (!empty($shortUrlIds)) {
+            if ($shortUrlsByUser = $this->dbh->query('SELECT DISTINCT(`user_id`) FROM `su_shorturls2users` 
+                                                      WHERE `shorturl_id` IN (' . implode(',', $shortUrlIds) . ')')) {
+                foreach ($shortUrlsByUser as $shortUrlByUser) {
+                    $userId = $shortUrlByUser['user_id'];
+                    $shortUrlsString = '';
+                    $shortUrls = $this->dbh->query('SELECT `su_shorturls`.* FROM `su_shorturls`
+                                                    JOIN `su_shorturls2users` 
+                                                      ON `su_shorturls`.`id` = `su_shorturls2users`.`shorturl_id`
+                                                    WHERE `su_shorturls2users`.`user_id` = ' . $userId . '
+                                                      AND `su_shorturls2users`.`shorturl_id` IN (' . implode(',', $shortUrlIds) . ')
+                                                    ORDER BY `su_shorturls`.`short_url`');
+                    foreach ($shortUrls as $shortUrl) {
+                        $shortUrlsString .= '<li>' . $shortUrl['short_url'] . '</li>';
+                    }
+                    if (!empty($shortUrlsString)) {
+                        $shortUrlsString = '<ul>' . $shortUrlsString . '</ul>';
+                        $this->_prepareAndSendReminder($userId, $subjectKeyToShared, $messageKeyToShared, $shortUrlsString, $weeksUntilExpiration);
+                    }
+                }
+            }
+        }
+    }
+}
+
+$sendReminder = new SendReminder();
+$sendReminder->run();

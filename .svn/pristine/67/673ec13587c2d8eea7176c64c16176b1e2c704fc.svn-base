@@ -1,0 +1,447 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+use Auth\Model\User;
+use Auth\Model\UsersTable;
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\ResultSet\ResultSet;
+use Laminas\Db\ResultSet\ResultSetInterface;
+use Laminas\Db\Sql\Expression;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\Sql\Where;
+use Laminas\Db\TableGateway\TableGatewayInterface;
+use Laminas\Paginator\Adapter\DbSelect;
+use Laminas\Paginator\Paginator;
+
+class ShorturlsTable extends AbstractTable
+{
+    /** @var string TABLENAME The name of the table */
+    const TABLENAME = 'su_shorturls';
+
+    /** @var integer FILTER_ALL Filter for all owned and shared shorturls */
+    const FILTER_ALL = 3;
+
+    /** @var integer FILTER_MY Filter for all owned shorturls */
+    const FILTER_MY = 1;
+
+    /** @var integer FILTER_SHARED Filter for shared shorturls */
+    const FILTER_SHARED = 2;
+
+    /** @var string DOMAIN_ALL Value for all domains selection */
+    const DOMAIN_ALL = 'all';
+
+    /**
+     * Constructor
+     *
+     * @param TableGatewayInterface $shorturlsTableGateway
+     * @param AdapterInterface $dbAdapter
+     */
+    public function __construct(
+        TableGatewayInterface $shorturlsTableGateway,
+        AdapterInterface $dbAdapter
+    ) {
+        parent::__construct($shorturlsTableGateway);
+        $this->dbAdapter = $dbAdapter;
+    }
+
+    /**
+     * Retrieve an active shorturl with the given $domain and $urlCode if existing
+     *
+     * @param string $shorturl
+     * @return Shorturl | null
+     */
+    public function getActiveShorturl($shorturl): Shorturl
+    {
+        $rowset = $this->tableGateway->select([
+            'short_url' => $shorturl,
+            'status' => '1',
+        ]);
+        $row = $rowset->current();
+        return $row;
+    }
+
+    /**
+     * Fetches a list of all shorturls depending on given parameters
+     *
+     * @param integer $domainId
+     * @param array $searchTerms
+     * @param string $sort
+     * @param string $order
+     * @param int $filter Either self::FILTER_ALL, self::FILTER_SHARED, self::FILTER_MY
+     * @param int $userId
+     * @return Paginator
+     */
+    public function getAllShortUrlsPaginated(int $domainId = 0, array $searchTerms = [], string $sort = null, string $order = null, int $filter = null, int $userId): Paginator
+    {
+        $select = new Select($this->tableGateway->getTable());
+        if ($domainId > 0) {
+            $select->where(['domain_id' => $domainId]);
+        }
+        if (!empty($order)) {
+            $order = strtoupper(trim($order));
+            if ($order !== 'ASC' && $order !== 'DESC') {
+                $order = 'ASC';
+            }
+        }
+        if (!empty($sort)) {
+            if (!empty($order)) {
+                $sort = $sort . ' ' . $order;
+            }
+            $select->order($sort);
+        }
+
+        if (!empty($filter)) {
+            switch ($filter) {
+                case self::FILTER_ALL:
+                    // no query extension
+                    break;
+                case self::FILTER_SHARED:
+                    $select->join(Shorturls2UsersTable::TABLENAME, self::TABLENAME . '.id = ' . Shorturls2UsersTable::TABLENAME . '.shorturl_id', [])
+                        ->where([Shorturls2UsersTable::TABLENAME . '.user_id' => $userId]);
+                    break;
+                default:
+                case self::FILTER_MY:
+                    $select->where(['user_id' => $userId]);
+
+            }
+        }
+
+        if (!empty($searchTerms)) {
+            $select->join(UsersTable::TABLENAME, self::TABLENAME . '.user_id = ' . UsersTable::TABLENAME . '.id', []);
+            $select->where(function (Where $where) use ($searchTerms) {
+                foreach ($searchTerms as $searchString) {
+                    $where->nest()
+                        ->like(UsersTable::TABLENAME . '.name', '%' . $searchString . '%')
+                        ->or
+                        ->like(UsersTable::TABLENAME . '.firstname', '%' . $searchString . '%')
+                        ->or
+                        ->like(UsersTable::TABLENAME . '.email', '%' . $searchString . '%')
+                        ->or
+                        ->like(self::TABLENAME . '.short_url', '%' . $searchString . '%')
+                        ->or
+                        ->like(self::TABLENAME . '.target_url', '%' . $searchString . '%')
+                        ->unnest();
+                }
+            });
+        }
+
+        $resultSetPrototype = new ResultSet();
+        $resultSetPrototype->setArrayObjectPrototype(new ShortUrl());
+
+        $paginatorAdapter = new DbSelect(
+            $select,
+            $this->tableGateway->getAdapter(),
+            $resultSetPrototype
+        );
+
+        // $sql = new Sql($this->dbAdapter);
+        // $selectString = $sql->buildSqlString($select);
+        // echo '<pre>';
+        // var_dump($selectString);
+        // echo '</pre>';
+
+        $paginator = new Paginator($paginatorAdapter);
+        return $paginator;
+    }
+
+    /**
+     * Lists shorturls filtered by the given search terms
+     *
+     * @param array $searchTerms
+     * @return Paginator
+     */
+    public function getShortUrlsBySearchTermPaginated(array $searchTerms): Paginator
+    {
+        $select = new Select($this->tableGateway->getTable());
+        $select->join(UsersTable::TABLENAME, self::TABLENAME . '.user_id = ' . UsersTable::TABLENAME . '.id', []);
+        $select->where(function (Where $where) use ($searchTerms) {
+            foreach ($searchTerms as $searchString) {
+                $where->nest()
+                    ->like(UsersTable::TABLENAME . '.name', '%' . $searchString . '%')
+                    ->or
+                    ->like(UsersTable::TABLENAME . '.firstname', '%' . $searchString . '%')
+                    ->or
+                    ->like(UsersTable::TABLENAME . '.email', '%' . $searchString . '%')
+                    ->or
+                    ->like(self::TABLENAME . '.short_url', '%' . $searchString . '%')
+                    ->or
+                    ->like(self::TABLENAME . '.target_url', '%' . $searchString . '%')
+                    ->unnest();
+            }
+        });
+        $select->order(self::TABLENAME . '.short_url');
+
+        $resultSetPrototype = new ResultSet();
+        $resultSetPrototype->setArrayObjectPrototype(new ShortUrl());
+
+        $paginatorAdapter = new DbSelect(
+            $select,
+            $this->tableGateway->getAdapter(),
+            $resultSetPrototype
+        );
+
+        $paginator = new Paginator($paginatorAdapter);
+        return $paginator;
+    }
+
+    /**
+     * Fetch all expired shorturls which are expired or will expire within the given weeks for the user with the given id
+     *
+     * @param integer $userId
+     * @param integer $weeksBeforeExpired
+     * @return ResultSetInterface
+     */
+    public function findExpiredShortUrls($userId, $weeksBeforeExpired): ResultSetInterface
+    {
+        if (empty($userId) || empty($weeksBeforeExpired)) {
+            return null;
+        }
+        $rs = $this->tableGateway->select(function (Select $select) use ($userId, $weeksBeforeExpired) {
+            $select->where(['user_id' => $userId])
+                ->where("expiry_date - INTERVAL {$weeksBeforeExpired} WEEK <= now()");
+        });
+        return $rs;
+    }
+
+    /**
+     * Set the expiry date of all expired and soon to expire (=within given weeksBeforeExpired) shorturls
+     *     of a user (with the given userId) to the current date + the given period
+     *
+     * @param integer $userId
+     * @param integer $weeksBeforeExpired
+     * @param string $period 1m, 3m, 6m, 1y or 2y
+     * @return integer The amount of affected rows
+     */
+    public function extendExpiredShortUrls($userId, $weeksBeforeExpired, $period): int
+    {
+        $date = date("Y-m-d");
+        switch ($period) {
+            case '1m':
+                $date = date("Y-m-d", strtotime(' + 30 days'));
+                break;
+            case '3m':
+                $date = date("Y-m-d", strtotime(' + 90 days'));
+                break;
+            case '6m':
+                $date = date("Y-m-d", strtotime(' + 180 days'));
+                break;
+            case '1y':
+                $date = date("Y-m-d", strtotime(' + 365 days'));
+                break;
+            case '2y':
+                $date = date("Y-m-d", strtotime(' + 730 days'));
+                break;
+            default:
+                // do nothing
+                break;
+        }
+        return $this->tableGateway->update(
+            array(
+                'expiry_date' => $date,
+                'sent_reminder1' => 0,
+                'sent_reminder2' => 0,
+                'sent_expiration_notification' => 0,
+                'status' => 1,
+            ),
+            "expiry_date - INTERVAL {$weeksBeforeExpired} WEEK <= now() AND user_id = {$userId}"
+        );
+    }
+
+    /**
+     * Fetch the top 5 most visited shorturls of the given user
+     *
+     * @param integer $userId
+     * @return ResultSetInterface
+     */
+    public function getTopShortUrls($userId): ResultSetInterface
+    {
+        return $this->tableGateway->select(function (Select $select) use ($userId) {
+            $select->where(['user_id' => $userId])
+                ->order('visits desc')
+                ->limit(5);
+        });
+    }
+
+    /**
+     * Count the owned shorturls of the given user
+     *
+     * @param int $userId
+     * @return integer
+     */
+    public function countOwnShortUrls($userId): int
+    {
+        $sql = new Sql($this->dbAdapter);
+        $select = $sql->select(self::TABLENAME)
+            ->columns(['count' => new \Laminas\Db\Sql\Expression('COUNT(*)')])
+            ->where(['user_id' => $userId]);
+
+        $selectString = $sql->buildSqlString($select);
+
+        return $this->executeCountQuery($selectString);
+    }
+
+    /**
+     * Count the inactive shorturls of the given user
+     *
+     * @param integer $userId
+     * @return integer
+     */
+    public function countOwnInactiveShortUrls($userId): int
+    {
+        $sql = new Sql($this->dbAdapter);
+        $select = $sql->select(self::TABLENAME)
+            ->columns(['count' => new \Laminas\Db\Sql\Expression('COUNT(*)')])
+            ->where(['user_id' => $userId])
+            ->where(['status' => 0]);
+
+        $selectString = $sql->buildSqlString($select);
+
+        return $this->executeCountQuery($selectString);
+    }
+
+    /**
+     * Count the shorturls which are shared with the given user
+     *
+     * @param integer $userId
+     * @return integer
+     */
+    public function countSharedShortUrls($userId): int
+    {
+        $sql = new Sql($this->dbAdapter);
+        $select = $sql->select(Shorturls2UsersTable::TABLENAME)
+            ->columns(['count' => new \Laminas\Db\Sql\Expression('COUNT(*)')])
+            ->where(['user_id' => $userId]);
+
+        $selectString = $sql->buildSqlString($select);
+
+        return $this->executeCountQuery($selectString);
+    }
+
+    /**
+     * Count the inactive shorturls which are shared with the given user
+     *
+     * @param integer $userId
+     * @return integer
+     */
+    public function countSharedInactiveShortUrls($userId): int
+    {
+        $sql = new Sql($this->dbAdapter);
+        $select = $sql->select(Shorturls2UsersTable::TABLENAME)
+            ->join(self::TABLENAME, Shorturls2UsersTable::TABLENAME . '.shorturl_id = ' . self::TABLENAME . '.id', [])
+            ->columns(['count' => new \Laminas\Db\Sql\Expression('COUNT(*)')])
+            ->where([Shorturls2UsersTable::TABLENAME . '.user_id' => $userId])
+            ->where([self::TABLENAME . '.status' => 0]);
+
+        $selectString = $sql->buildSqlString($select);
+
+        return $this->executeCountQuery($selectString);
+    }
+
+    /**
+     * Count shorturls which are either owned by or shared with the given user
+     *
+     * @param integer $userId
+     * @return integer
+     */
+    public function countInactiveShortUrls($userId): int
+    {
+        return $this->countOwnInactiveShortUrls($userId)
+         + $this->countSharedInactiveShortUrls($userId);
+    }
+
+    /**
+     * Executes the given select query and returns the value of the column 'count'
+     *
+     * @param string $selectString
+     * @return integer
+     */
+    private function executeCountQuery($selectString): int
+    {
+        $count = 0;
+        $rs = $this->dbAdapter->query($selectString, $this->dbAdapter::QUERY_MODE_EXECUTE);
+        if ($rs) {
+            $row = $rs->current();
+            if (isset($row['count'])) {
+                $count = (int) $row['count'];
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Retrieve a short url by urlcode and domain id
+     *
+     * @param string $urlCode
+     * @param integer $domainId
+     * @return ResultSetInterface
+     */
+    public function findByUrlCodeAndDomainId(string $urlCode, int $domainId): ResultSetInterface
+    {
+        $selectFactory = function (Select $select) use ($urlCode, $domainId) {
+            $select->where(['url_code' => $urlCode, 'domain_id' => $domainId]);
+        };
+        return $this->tableGateway->select($selectFactory);
+    }
+
+    /**
+     * Fetch all shorturls with given ids
+     *
+     * @param array $shorturlIds
+     * @return ResultSetInterface
+     */
+    public function getByIds(array $shorturlIds): ResultSetInterface
+    {
+        $selectFactory = function (Select $select) use ($shorturlIds) {
+            $select->where(function (Where $where) use ($shorturlIds) {
+                $where->in('id', $shorturlIds);
+            });
+        };
+        $result = $this->tableGateway->select($selectFactory);
+        return $result;
+    }
+
+    /**
+     * Search in all own and shared (or in all if isAdmin) shorturls for the given searchString
+     *
+     * @param string $searchString
+     * @param User $user
+     * @return ResultSetInterface
+     */
+    public function findAutocompleteShorturl($searchString, User $user): ResultSetInterface
+    {
+        $sql = new Sql($this->dbAdapter);
+        $select = $sql->select(self::TABLENAME)
+            ->quantifier(Select::QUANTIFIER_DISTINCT)
+            ->where(function (Where $where) use ($searchString) {
+                $where->nest
+                    ->like('url_code', '%' . $searchString . '%')
+                    ->or
+                    ->like('target_url', '%' . $searchString . '%')
+                    ->unnest;
+            });
+        if (!$user->isAdmin() && !$user->isSuperAdmin()) {
+            // restrict to only own or shared shorturls
+            $select->join(Shorturls2UsersTable::TABLENAME, self::TABLENAME . '.id = ' . Shorturls2UsersTable::TABLENAME . '.shorturl_id', [], 'LEFT')
+                ->where(function (Where $where) use ($user) {
+                    $where->nest
+                        ->equalTo(Shorturls2UsersTable::TABLENAME . '.user_id', $user->id)
+                        ->or
+                        ->equalTo(self::TABLENAME . '.user_id', $user->id)
+                        ->unnest;
+                });
+        }
+        if ($user->isAdmin()) {
+            // restrict to shorturls of admin domain
+            $select->join(Admins2DomainsTable::TABLENAME, self::TABLENAME . '.domain_id = ' . Admins2DomainsTable::TABLENAME . '.domain_id', [])
+                ->where([Admins2DomainsTable::TABLENAME . '.user_id' => $user->id]);
+        }
+
+        $selectString = $sql->buildSqlString($select);
+        $rs = $this->dbAdapter->query($selectString, $this->dbAdapter::QUERY_MODE_EXECUTE);
+
+        return $rs;
+    }
+
+}

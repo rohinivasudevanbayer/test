@@ -1,0 +1,26 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController as LaminasAbstractActionController;
+use Laminas\Mvc\MvcEvent;
+
+class AbstractActionController extends LaminasAbstractActionController
+{
+
+    /**
+     * Execute the request
+     *
+     * @param  MvcEvent $e
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    public function onDispatch(MvcEvent $e)
+    {
+        // TODO move the layout variables defaults into separate module or into view helper
+
+        // set default layout variables
+        $this->layout()->showSearch = false;
+
+        return parent::onDispatch($e);
+    }
+}

@@ -1,0 +1,70 @@
+<div style="padding: 15px"><h1>Dokumentation </h1>
+    <h2>Verwendung von ShortURLs</h2>
+    <p>Mit der Erstellung einer ShortURL wird eine kurze und leicht zu merkende URL erzeugt. Die ShortURL verweist auf
+        ein beliebiges Ziel. Als Ziel kann z.B. eine lange und schwer zu merkende URL verwendet werden. Die ShortURL
+        kann für andere Benutzer freigegeben werden, so dass z.B. kein langer Sharepoint-Link versendet werden muss,
+        sondern lediglich die erzeugte ShortURL.</p>
+
+    <h2>Anlegen einer ShortURL</h2>
+    <p>Zum Anlegen einer neuen ShortURL wird der Button "Neue ShortURL anlegen" ausgewählt.</p>
+    <img src="/images/DE-create_new_shortURL.png">
+    <p>Im sich öffnenden Formular müssen vier Angaben vorgenommen werden. </p>
+    <img src="/images/DE-create_new_shortURL_form.png">
+    <p>Ziel-URL: Die tatsächliche URL zu der der User weitergeleitet wird.<br>
+        ShortURL: Das Kürzel der ShortURL. Diese kann entweder automatisch erzeugt oder frei gewählt werden.<br>
+        Ablaufdatum: Datum, ab dem die ShortURL nicht mehr gültig ist.<br>
+        Status: Status der ShortURL. Wenn die ShortURL deaktiviert ist, wird nicht mehr weitergeleitet.</p>
+    <p>Durch den Button "Speichern" wird die neue ShortURL gespeichert.</p>
+
+    <h2>Anzeigen von ShortURLs</h2>
+    <p>Auf der eigenen Übersichtsseite werden alle ShortURLs angezeigt, auf die Zugriff besteht.</p>
+    <img src="/images/DE-my_shortURLs.png">
+    <p>Die Liste kann über zwei Optionen gefiltert werden.</p>
+
+    <h3>Filter</h3>
+    <p>Kann die Auswahl auf die selbst angelegten oder ShortURLs von anderen Personen beschränken. Hinweis: Bei "Nur
+        geteilte URLs" werden nur solche URLs angezeigt, auf die der aktuelle Benutzer Zugriff hat.</p>
+    <img src="/images/DE-filter.png">
+
+    <h3>Domains</h3>
+    <p>Kann die Auswahl auf URLs von einer Domain begrenzen.</p>
+    <img src="/images/DE-domains.png">
+    <p>&nbsp;</p>
+    <p>Über die Aktionsbuttons hinter jeder ShortURL kann schnell auf häufig verwendete Funktionen zugegriffen
+        werden.</p>
+
+    <h2>Bearbeiten einer ShortURL</h2>
+    <p>Um eine bereits angelegte ShortURL zu bearbeiten, wird der Aktionsbutton "Bearbeiten" ausgewählt.</p>
+    <img src="/images/edit_button.png">
+    <p>Im sich öffnenden Formular können die Angaben, die bei der Erstellung getroffen wurden, verändert werden (mit
+        Ausnahme der ShortURL selbst).</p>
+    <img src="/images/DE-edit_shortURL.png">
+
+    <h2>Statistiken einer shortURL</h2>
+    <p>Die Statistiken einer shortURL können über den Aktionsbutton "Statistik" aufgerufen werden.</p>
+    <img src="/images/statistic_button.png">
+    <p>In der sich öffnenden Statistikseite kann der Zeitraum der anzuzeigenden Statistik ausgewählt werden.</p>
+    <img src="/images/DE-statistic_timeframe.png">
+    <p>Darunter wird die Statistik für den ausgewählten Zeitraum angezeigt.</p>
+
+    <h2>Teilen einer ShortURL</h2>
+    <p>Im Bearbeiten-Dialog in der rechten Spalte ist die Funktion zum Teilen einer ShortURL vorhanden. Es wird dort
+        ebenfalls angezeigt, mit wem diese URL bereits geteilt ist.</p>
+    <img src="/images/DE-share_shortURL.png">
+
+    <h2>Suchen nach ShortURLs</h2>
+    <p>Soll nach einer oder mehreren ShortURLs gesucht werden, kann der komplette String oder ein Teil davon in die
+        Suche eingegeben werden.</p>
+    <img src="/images/DE-search.png">
+    <p>Es wird in der kompletten Liste der ShortURLs der eigenen Übersicht gesucht.</p>
+
+    <h2>Mein Profil</h2>
+    <p>Wird "Mein Profil" ausgewählt gelangt der Benutzer auf seine Profildaten.</p>
+    <img src="/images/DE-my_profile.png">
+    <p>Hier können Statistiken eingesehen, ShortUrls verwaltet und Daten geändert werden.</p>
+
+    <h2>Sprache</h2>
+    <p>Die Oberfläche der ShortURL-Seite lässt sich in Deutsch und Englisch anzeigen. Dies kann im Dropdown rechts oben
+        ausgewählt werden.</p>
+    <img src="/images/DE-language.png">
+</div>

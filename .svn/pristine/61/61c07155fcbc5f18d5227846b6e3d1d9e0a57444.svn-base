@@ -1,0 +1,6 @@
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <?php if (!empty($this->headline) && !empty($this->name)): ?>
+    <h4 class="modal-title" id="<?=$this->name?>-label"><?=$this->headline?></h4>
+    <?php endif;?>
+</div>

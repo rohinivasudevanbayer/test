@@ -1,0 +1,88 @@
+$(function() {
+  $(".language-select").on("change", function() {
+    var url = window.location.href.split("?")[0],
+      params = window.location.search;
+    newparams = params;
+    if (!params.length) {
+      newparams = "?lang=" + $(this).val();
+    } else {
+      if (params.indexOf("lang=") >= 0) {
+        newparams = params.replace(
+          /([\?&])lang=[a-z]{2}/gi,
+          "$1lang=" + $(this).val()
+        );
+      } else {
+        newparams = params + "&lang=" + $(this).val();
+      }
+    }
+    url += newparams;
+    window.location.href = url;
+  });
+
+  //=====================================================================================================================
+  // Modal Ajax Request
+  //=====================================================================================================================
+  $('[data-toggle="ajaxModal"]').on("click", function(e) {
+    displayLoading();
+    $("#ajax-pre-loader").show();
+    $("#ajaxModal").remove();
+    e.preventDefault();
+    var $this = $(this),
+      $remote = $this.data("remote") || $this.attr("href"),
+      $modal = $(
+        '<div class="modal" id="ajaxModal"><div class="modal-body"></div></div>'
+      );
+    $("body").append($modal);
+    $modal.modal({ backdrop: "static", keyboard: false });
+    $modal.load($remote);
+    var showEvent = setInterval(function() {
+      var content = $modal.find(".modal-dialog").html();
+      if (undefined != content) {
+        $("#ajax-pre-loader").hide();
+        clearInterval(showEvent);
+      }
+    }, 100);
+  });
+
+  //=====================================================================================================================
+  // Loading Html
+  //=====================================================================================================================
+  var displayLoading = function() {
+    var htmlCon =
+      '<div id="ajax-pre-loader" class="center-block text-center" style="position: relative;z-index: 9999; display: none;">' +
+      '<div class="loading">' +
+      '<span class="loading">Loading ...</span>' +
+      '<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>' +
+      "</div>" +
+      "</div>";
+    $(".bs-component").append(htmlCon);
+  };
+
+  //=====================================================================================================================
+  // Description for input fields
+  //=====================================================================================================================
+  var $descFields = $(".help-desc");
+  $descFields.each(function(index, obj) {
+    var labelId = "#" + $(obj).attr("name") + "-label";
+    var desc = $(this).data("desc");
+    var infoContent =
+      '&nbsp;<span class="info-content-box">' +
+      '<span data-toggle="tooltip" data-placement="bottom" title="' +
+      desc +
+      '" ' +
+      'aria-hidden="true" class="glyphicon glyphicon-question-sign info-desc-btn"></span>';
+    $(labelId)
+      .find("label")
+      .append(infoContent);
+  });
+
+  $(".info-desc-btn").tooltip();
+
+  pa = function(object) {
+    if (typeof console == "object") {
+      console.log(object);
+    } else {
+      alert("pa in 'templatejsglobal.js': Console does not exist");
+    }
+  };
+});

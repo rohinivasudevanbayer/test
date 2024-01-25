@@ -1,0 +1,145 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application;
+
+use Auth\Service\AuthManager;
+use Laminas\Mvc\MvcEvent;
+use Laminas\ServiceManager\Factory\InvokableFactory;
+
+class Module
+{
+    public function getConfig(): array
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+
+    public function getControllerConfig()
+    {
+        return [
+            'factories' => [
+                Controller\IndexController::class => function ($container) {
+                    $config = $container->get('config');
+                    $authManager = $container->get(AuthManager::class);
+                    $shortUrlsTable = $container->get(\Shorturl\Model\ShorturlsTable::class);
+                    $mailSender = $container->get(Service\MailSender::class);
+                    return new Controller\IndexController(
+                        $config,
+                        $authManager,
+                        $shortUrlsTable,
+                        $mailSender
+                    );
+                },
+                Controller\UserController::class => function ($container) {
+                    $config = $container->get('config');
+                    $authManager = $container->get(AuthManager::class);
+                    $shortUrlsTable = $container->get(\Shorturl\Model\ShorturlsTable::class);
+                    return new Controller\UserController(
+                        $config,
+                        $authManager,
+                        $shortUrlsTable
+                    );
+                },
+            ],
+        ];
+    }
+
+    public function getServiceConfig()
+    {
+        return [
+            'aliases' => [
+                'url' => Laminas\View\Helper\Url::class,
+            ],
+            'factories' => [
+                Laminas\View\Helper\Url::class => InvokableFactory::class,
+                Service\MailSender::class => function ($container) {
+                    $config = $container->get('config');
+                    return new Service\MailSender($config);
+                },
+            ],
+        ];
+    }
+
+    public function onBootstrap(MvcEvent $e)
+    {
+        $application = $e->getApplication();
+        //$controller = $e->getTarget()->getMvcEvent()->getViewModel();
+        $serviceManager = $application->getServiceManager();
+
+        $config = $serviceManager->get('config');
+        $session = $serviceManager->get('SessionContainer');
+        $translator = $serviceManager->get('MvcTranslator');
+        $request = $e->getRequest();
+        $this->initLanguage($config, $session, $translator, $request);
+
+        $layoutView = $e->getApplication()->getMvcEvent()->getViewModel();
+        $authManager = $serviceManager->get(AuthManager::class);
+
+        $layoutView->showLogoutLink = !empty($config['layout']['show_logout_link']) && !!$config['layout']['show_logout_link'];
+
+        if (!$authManager->isLoggedIn()) {
+            $authManager->autoOAuthLogin();
+        }
+
+        $shorturlsTable = $serviceManager->get(\Shorturl\Model\ShorturlsTable::class);
+
+        $this->initLayoutView($config, $session, $layoutView, $authManager, $shorturlsTable);
+    }
+
+    protected function initLayoutView(
+        array $config,
+        \Laminas\Session\Container $session,
+        \Laminas\View\Model\ViewModel $layoutView,
+        \Auth\Service\AuthManager $authManager,
+        \Shorturl\Model\ShorturlsTable $shorturlsTable
+    ) {
+        $layoutView->showSearch = false;
+        $layoutView->searchParams = [];
+        $layoutView->languages = $config['languages'];
+        $layoutView->activeLanguage = $session['activeLanguage'];
+        $layoutView->isLoggedIn = $authManager->isLoggedIn();
+        $layoutView->user = $authManager->isLoggedIn() ? $authManager->getUser() : '';
+        $layoutView->breadcrumbItems = [['label' => 'ShortURL', 'route' => $authManager->isLoggedIn() ? 'shorturl' : 'home']];
+
+        $layoutView->numberOfExpiredUrls = $layoutView->isLoggedIn ? $shorturlsTable->countExpiredShorturls($layoutView->user->id) : 0;
+        $layoutView->numberOfSoonExpiringUrls = $layoutView->isLoggedIn ? $shorturlsTable->countSoonExpiringShorturls($layoutView->user->id, (int) $config['reminder1']['weeks_until_expiration']) : 0;
+    }
+
+    /**
+     * Setup translator language and handle language change
+     *
+     * @param array $config The application configuration
+     * @param \Laminas\Session\Container $session The session container to save the active language
+     * @param \Laminas\Mvc\I18n\Translator $translator The application translator
+     * @param \Laminas\Http\Request $request The current request (which potentially holds the language query param)
+     * @return void
+     */
+    protected function initLanguage(
+        array $config,
+        \Laminas\Session\Container $session,
+        \Laminas\Mvc\I18n\Translator $translator,
+        \Laminas\Http\Request $request
+    ) {
+        $fallbackLanguage = 'en';
+        if (!is_null($request->getQuery()->lang)) {
+            $querystringLang = $request->getQuery()->lang;
+            if (in_array($querystringLang, $config['languages'])) {
+                $session->activeLanguage = $querystringLang;
+            }
+        }
+
+        if (empty($session->activeLanguage)) {
+            $browserLang = substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2);
+            if (in_array($browserLang, $config['languages'])) {
+                $session->activeLanguage = $browserLang;
+            } else {
+                $session->activeLanguage = $fallbackLanguage;
+            }
+        }
+
+        $translator
+            ->setLocale($session->activeLanguage)
+            ->setFallbackLocale($fallbackLanguage);
+    }
+
+}

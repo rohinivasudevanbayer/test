@@ -1,0 +1,76 @@
+<h1>Privacy Statement</h1>
+<p>This website (hereinafter the “<i>Website</i>“) is provided by <strong>Bayer Business Services GmbH</strong> (hereinafter “<i>us</i>” or “<i>we</i>”). For further information regarding the provider of the Website, please refer to our <a href="<?=$this->url('static', ['action' => 'imprint'])?>">imprint</a>.</p>
+<h2>Handling of personal data</h2>
+<p>In the following we wish to provide you with information on how we handle your personal data when you use our Website. Unless otherwise indicated in the following chapters, the legal basis for the handling of your personal data results from the fact that such handling is required to make available the functionalities of the Website requested by you (Art. 6(1)(b) General Data Protection Regulation).</p>
+<h2>Using our Website</h2>
+<h3>Accessing our Website</h3>
+<p>When you call up our Website, your browser will transfer certain information to our web server. This is done for technical reasons and required to make available to you the requested information. To facilitate your access to the Website, the following information are collected, briefly stored and used:</p>
+<ul>
+    <li>IP address</li>
+    <li>date and time of access</li>
+    <li>Time zone difference to Greenwich Mean Time (GMT)</li>
+    <li>Content of request (specific site)</li>
+    <li>Status of access/HTTP status code</li>
+    <li>Transferred volume of data</li>
+    <li>Website requesting access</li>
+    <li>Browser, language settings, version of browser software operating system and surface</li>
+</ul>
+<p>Moreover, to protect our legitimate interests, we will store such information for a limited period of time in order to be able to initiate a tracking of personal data in the event of actual or attempted unauthorized access to our servers (Art. 6(1)(f) General Data Protection Regulation).</p>
+<h2>Registration and login</h2>
+<p>In order to be able to use certain services of our Website, you need to first register an account with us, where you are able to determine your personal login credentials that you need to be able to log into your personal account. For this registration and subsequent login procedure, we collect the following information about you:</p>
+<ul>
+    <li>Name and surname</li>
+    <li>Contact data (icl. email address and phone number</li>
+</ul>
+<p>We process this personal data in order to provide you with an access to the services of our Website. They are deleted in case you deactivate your user account.</p>
+<h2>Third party login services / single sign on</h2>
+<p>Subject to you providing your consent (Art. 6(1)(a) General Data Protection Regulation), we provide you with the possibility to register to our services by using the third party login service provider Bayer (via Microsoft Online) (hereinafter “Login-Service Provider”). In order to use this login service, you will be asked to login to Login-Service Provider’s service using your respective login credentials. By doing so, your profile will be connected to our service, which means that Login-Service Provider receives the information that you use our service and we automatically receive the following information about you:</p>
+<ul>
+    <li>Contact data (incl. email address)</li>
+</ul>
+<p>We will use this information only for the registration purpose and in order to identify you during your logins. In case Login-Service Provider transfers more information about you than we need for the login verification purpose, we immediately delete this information. For further information on how Login-Service Provider’s service work and how the Login-Service Provider processes your personal data, please refer to Login-Service Provider‘s <a href="https://privacy.microsoft.com/en-US/privacystatement" target="_blank">privacy statement</a>. We delete your personal data in case you delete your user account.</p>
+<h2>Setting of cookies </h2>
+<h3>What are cookies?</h3>
+<p>This Website uses so-called “cookies”. Cookies are small text files that are stored in the memory of your terminal via your browser. They store certain information (e.g. your preferred language or site settings) which your browser may (depending on the lifespan of the cookie) retransmit to us upon your next visit to our Website.</p>
+<h3>What cookies do we use?</h3>
+<p>We differentiate between two categories of cookies: (1) functional cookies, without which the functionality of our Website would be reduced, and (2) <strong>optional cookies</strong> used for e.g. website analysis and marketing purposes. The following tables contain a detailed description of the optional cookies we use:</p>
+<h3>Optional Cookies</h3>
+<p>This website does not use optional cookies.</p>
+<h3>How to prevent the setting of cookies</h3>
+<p>Of course you may use our Website without any cookies being set. In your browser, you can at any time configure or completely deactivate the use of cookies. This may, however, lead to a restriction of the functions or have adverse effects on the user-friendliness of our Website.</p>
+<h2>Use of contact forms</h2>
+<p>You can contact us directly via the contact forms available on our Website. In particular, you may provide us with the following information:</p>
+<ul>
+    <li>Contact data (e.g. E-Mail address, phone number)</li>
+    <li>Message</li>
+</ul>
+<p>We process information provided by you via contact forms exclusively for the processing of your specific request. We delete this information as soon as it is no longer required anymore in order to process or follow up on your request.</p>
+<h2>Information regarding your rights</h2>
+<p>The following rights are in general available to you according to applicable data privacy laws:</p>
+<ul>
+    <li>Right of information about your personal data stored by us;</li>
+    <li>Right to request the correction, deletion or restricted processing of your personal data;</li>
+    <li>Right to object to a processing for reasons of our own legitimate interest, public interest, or profiling , unless we are able to proof that compelling, warranted reasons superseding your interests, rights and freedom exist, or that such processing is done for purposes of the assertion, exercise or defense of legal claims;</li>
+    <li>Right to data portability;</li>
+    <li>Right to file a complaint with a data protection authority;</li>
+    <li>You may at any time with future effect withdraw your consent to the processing of your personal data. For further information please refer to the chapters above describing the processing of personal data based on your consent.</li>
+</ul>
+<p>If you wish to exercise your rights, please address your request to the contact indicated below.</p>
+<p><strong>If you are a resident of California or Nevada in the United States, you may have additional rights regarding your personal data. More information may be found <a href="https://www.bayer.us/en/global-us-privacy-statement-addendum/" target="_blank">here</a>.</strong></p>
+<h2>Contact</h2>
+<p>For any questions you may have with respect to data privacy, please <a href="<?=$this->url('static', ['action' => 'contact'])?>">write an e-mail</a> or contact our company data protection officer at the following address:</p>
+<p>
+<strong>Data Protection Officer, Bayer Business Services GmbH:</strong><br />
+Diana Stoll<br />
+Gebäude B151<br />
+D-51368 Leverkusen<br />
+Phone: +49 (0) 214 / 30 54030<br />
+E-Mail: <a href="mailto:diana.stoll@bayer.com">diana.stoll@bayer.com</a><br /><br />
+<strong>Head of Data Privacy: </strong><br />
+Eva Gardyan-Eisenlohr <br />
+Phone: +49 (0) 30 468 16924 <br />
+<a target="_blank" href="https://secure.bayer.com/bayer/ContactDataprotectionOfficer.aspx?lang=en">E-mail</a>
+</p>
+<h2>Amendment of Privacy Statement</h2>
+<p>We may update our Privacy Statement from time to time. Updates of our Privacy Statement will be published on our Website. Any amendments become effective upon publication on our Website. We therefore recommend that you regularly visit the site to keep yourself informed on possible updates.</p>
+<p>Last updated: <strong>01.03.2020</strong>.</p>

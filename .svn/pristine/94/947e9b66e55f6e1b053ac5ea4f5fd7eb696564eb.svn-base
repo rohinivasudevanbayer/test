@@ -1,0 +1,89 @@
+<?php
+declare (strict_types = 1);
+
+namespace Auth;
+
+use Laminas\Router\Http\Literal;
+use Laminas\Router\Http\Segment;
+
+return [
+    'router' => [
+        'routes' => [
+            'login' => [
+                'type' => Literal::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/login',
+                    'defaults' => [
+                        'controller' => Controller\AuthController::class,
+                        'action' => 'login',
+                    ],
+                ],
+            ],
+            'logout' => [
+                'type' => Literal::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/logout',
+                    'defaults' => [
+                        'controller' => Controller\AuthController::class,
+                        'action' => 'logout',
+                    ],
+                ],
+            ],
+            'auth' => [
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/auth[/:action]',
+                    'defaults' => [
+                        'controller' => Controller\AuthController::class,
+                        'action' => 'login',
+                    ],
+                ],
+            ],
+            'user' => [
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/auth[/:action]',
+                    'defaults' => [
+                        'controller' => Controller\UserController::class,
+                        'action' => 'profile',
+                    ],
+                ],
+            ],
+        ],
+    ],
+    'view_manager' => [
+        'template_path_stack' => [
+            'auth' => __DIR__ . '/../view',
+        ],
+    ],
+    'access_filter' => [
+        'controllers' => [
+            // use following values in allow array key: * for all visitors, @ for logged in users only
+            \Admin\Controller\IndexController::class => [
+                ['actions' => ['user'], 'allow' => '@'], // @todo introcude superadmin role
+            ],
+            \Application\Controller\IndexController::class => [
+                ['actions' => ['index', 'conditionsOfUse', 'imprint', 'privacyStatement', 'contact'], 'allow' => '*'],
+                ['actions' => ['documentation'], 'allow' => '@'],
+            ],
+            \ShortUrl\Controller\RedirectController::class => [
+                ['actions' => ['index'], 'allow' => '*'],
+            ],
+            \Auth\Controller\AuthController::class => [
+                ['actions' => ['login'], 'allow' => '*'],
+                ['actions' => ['logout'], 'allow' => '@'],
+            ],
+            \Auth\Controller\UserController::class => [
+                ['actions' => ['fullRegister', 'lostPassword'], 'allow' => '*'],
+            ],
+            \ShortUrl\Controller\ShorturlController::class => [
+                ['actions' => ['index'], 'allow' => '@'],
+            ],
+        ],
+    ],
+
+];

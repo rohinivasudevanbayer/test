@@ -1,0 +1,90 @@
+<?php
+
+/**
+ * Global Configuration Override
+ *
+ * You can use this file for overriding configuration values from modules, etc.
+ * You would place values in here that are agnostic to the environment and not
+ * sensitive to security.
+ *
+ * NOTE: In practice, this file will typically be INCLUDED in your source
+ * control, so do not include passwords or other sensitive information in this
+ * file.
+ */
+
+use Laminas\Session\Storage\SessionArrayStorage;
+use Laminas\Session\Validator\HttpUserAgent;
+use Laminas\Session\Validator\RemoteAddr;
+
+return [
+    'db' => [
+        'driver' => 'Pdo',
+        'dsn' => 'mysql:dbname=' . $_SERVER['RDS_DB_NAME'] . ';host=' . $_SERVER['RDS_HOSTNAME'] . ';charset=utf8',
+        'username' => $_SERVER['RDS_USERNAME'],
+        'password' => $_SERVER['RDS_PASSWORD']
+    ],
+    'languages' => ['en', 'de'],
+    'mail' => [
+        'print_insteadof_sending' => false,
+    ],
+    'translator' => [
+        'locale' => 'en',
+        'translation_file_patterns' => [
+            [
+                'type' => 'phparray',
+                'base_dir' => getcwd() . '/data/languages',
+                'pattern' => '%s.php',
+            ],
+        ],
+    ],
+    'session_config' => [
+        'cookie_lifetime' => 60 * 60 * 1,
+        'gc_maxlifetime' => 60 * 60 * 24 * 30,
+    ],
+    'session_manager' => [
+        'validators' => [
+            RemoteAddr::class,
+            HttpUserAgent::class,
+        ],
+    ],
+    'session_storage' => [
+        'type' => SessionArrayStorage::class,
+    ],
+    'reminder1' => [
+        'active' => 1,
+        'weeks_until_expiration' => 6,
+        'send_to_owner' => 1,
+        'send_to_shared' => 1,
+        'limit_per_run' => 20,
+    ],
+    'reminder2' => [
+        'active' => 1,
+        'weeks_until_expiration' => 2,
+        'send_to_owner' => 1,
+        'send_to_shared' => 1,
+        'limit_per_run' => 20,
+    ],
+    'expiration_notification' => [
+        'active' => 1,
+        'send_to_owner' => 1,
+        'send_to_shared' => 1,
+        'limit_per_run' => 20,
+    ],
+    'shorturls_list' => [
+        'items_per_page' => 40,
+    ],
+    'history' => [
+        'items_per_page' => 20,
+    ],
+    'admin' => [
+        'users' => [
+            'items_per_page' => 40,
+        ],
+        'change_owners' => [
+            'items_per_page' => 40,
+        ],
+    ],
+    'layout' => [
+        'show_logout_link' => false,
+    ],
+];

@@ -1,0 +1,7 @@
+<?php if ($this->isActive): ?>
+    <li class="active"><?=$this->escapeHtml($this->label)?></li>
+<?php else: ?>
+    <li>
+        <a href="<?=$this->link?>"><?=$this->escapeHtml($this->label)?></a>
+    </li>
+<?php endif;?>

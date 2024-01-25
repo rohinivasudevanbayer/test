@@ -1,0 +1,23 @@
+<?php
+namespace ShortUrlLib\Mvc\Controller;
+
+use Zend\Mvc\Controller;
+
+abstract class AbstractActionController extends AbstractController
+{
+    /**
+     * Execute the request
+     *
+     * @param  MvcEvent $e
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    public function onDispatch(MvcEvent $e)
+    {
+        $response = parent::onDispatch($e);
+
+        $this->layout()->show;
+
+        return $response;
+    }
+}

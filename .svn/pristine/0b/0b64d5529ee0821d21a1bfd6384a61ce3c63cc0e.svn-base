@@ -1,0 +1,7 @@
+</div>
+<?php if (!empty($this->dismissButtonLabel)): ?>
+<div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal"><?=$this->dismissButtonLabel?></button>
+    <?php /*<button data-redirect-url="' . $redirectUrl . '" onClick="' . $onClickEvent . '" type="button" class="btn btn-primary">' . $yesButtonLabel . '</button>*/?>
+</div>
+<?php endif;?>

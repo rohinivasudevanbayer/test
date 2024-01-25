@@ -1,0 +1,24 @@
+<?php if ($this->showFullBreadcrumb): ?>
+    <?php if ($this->getParams('controller') == 'index' || $this->getParams('controller') == 'profile' || $this->getParams('controller') == 'static' || $this->getParams('controller') == 'shorturl' || $this->getParams('controller') == 'auth'): ?>
+        <li><a href="<?php echo $this->getUrl('shorturl', 'index'); ?>"><?php echo t('Shorturl'); ?></a></li>
+    <?php endif;?>
+    <?php if ($this->getParams('controller') != 'shorturl' && $this->getParams('controller') != 'static' && $this->getParams('controller') !== 'auth'): ?>
+        <?php if ($this->getParams('action') == 'index'): ?>
+            <li class="active"><?php echo ucfirst($this->getParams('controller')); ?></li>
+        <?php else: ?>
+            <li><a href="<?php echo $this->getUrl($this->getParams('controller'), 'index'); ?>"><?php echo ucfirst($this->getParams('controller')); ?></a></li>
+        <?php endif;?>
+    <?php endif;?>
+
+    <?php if (!empty($this->breadcrumbLabel)): ?>
+        <li class="active"><?php echo $this->breadcrumbLabel ?></li>
+    <?php elseif ($this->getParams('action') !== 'index'): ?>
+        <li class="active"><?php echo ucfirst($this->getParams('action')); ?></li>
+    <?php endif;?>
+<?php else: ?>
+    <?php if (Services_User::checkLogin()): ?>
+        <li><a href="<?php echo $this->getUrl('shorturl', 'index'); ?>"><?php echo t('Shorturl'); ?></a></li>
+    <?php else: ?>
+        <li><a href="<?php echo $this->getUrl('index', 'index'); ?>"><?php echo t('Shorturl'); ?></a></li>
+    <?php endif;?>
+<?php endif;?>

@@ -1,0 +1,9 @@
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderHeader('documentation', $this->translate('Documentation'))?>
+<?php endif;?>
+
+<?=$this->partial('partial/documentation_' . $this->layout()->activeLanguage . '.phtml')?>
+
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderFooter('documentation', $this->translate('Close'))?>
+<?php endif;?>

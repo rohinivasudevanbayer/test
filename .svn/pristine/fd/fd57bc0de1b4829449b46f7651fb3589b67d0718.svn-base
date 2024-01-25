@@ -1,0 +1,15 @@
+<?php
+namespace Auth\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+
+class AuthController extends AbstractActionController
+{
+    public function loginAction()
+    {
+    }
+
+    public function logoutAction()
+    {
+    }
+}

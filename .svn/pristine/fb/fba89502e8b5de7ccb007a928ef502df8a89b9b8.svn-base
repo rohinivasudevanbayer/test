@@ -1,0 +1,4 @@
+<?php return '
+<h1>Welcome to the Bayer Short URL service</h1>
+
+';

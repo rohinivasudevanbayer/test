@@ -1,0 +1,134 @@
+<?php
+declare (strict_types = 1);
+
+namespace Auth;
+
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Authentication\Storage\Session as SessionStorage;
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\ResultSet\ResultSet;
+use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Session\SessionManager;
+use Shorturl\Model\Admins2DomainsTable;
+use Shorturl\Model\Shorturls2UsersTable;
+
+class Module
+{
+    public function getConfig()
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+
+    public function getControllerConfig()
+    {
+        return [
+            'factories' => [
+                Controller\AuthController::class => function ($container) {
+                    $usersTable = $container->get(Model\UsersTable::class);
+                    $authManager = $container->get(Service\AuthManager::class);
+                    return new Controller\AuthController($usersTable, $authManager);
+                },
+                Controller\UserController::class => function ($container) {
+                    $usersTable = $container->get(Model\UsersTable::class);
+                    return new Controller\UserController($usersTable);
+                },
+            ],
+        ];
+    }
+
+    public function getServiceConfig()
+    {
+        return [
+            'factories' => [
+                Model\User::class => function ($container) {
+                    return new Model\User();
+                },
+                Model\UsersTable::class => function ($container) {
+                    $usersTableGateway = $container->get(Model\UsersTableGateway::class);
+                    $shorturls2UsersTable = $container->get(Shorturls2UsersTable::class);
+                    $admins2DomainsTable = $container->get(Admins2DomainsTable::class);
+                    return new Model\UsersTable($usersTableGateway, $shorturls2UsersTable, $admins2DomainsTable);
+                },
+                Model\UsersTableGateway::class => function ($container) {
+                    $dbAdapter = $container->get(AdapterInterface::class);
+                    $userObject = $container->get(Model\User::class);
+                    $resultSetPrototype = new ResultSet();
+                    $resultSetPrototype->setArrayObjectPrototype($userObject);
+                    return new TableGateway('su_users', $dbAdapter, null, $resultSetPrototype);
+                },
+                AuthenticationService::class => function ($container) {
+                    try {
+                        $sessionManager = $container->get(SessionManager::class);
+                    } catch (\Exception $e) {
+                        if (strpos($e->getMessage(), 'Session validation failed') === false) {
+                            throw $e;
+                        }
+                        session_regenerate_id(true);
+                        session_reset();
+                        $sessionManager = $locator->get(SessionManager::class);
+                    }
+                    $authStorage = new SessionStorage('Laminas_Auth', 'session', $sessionManager);
+                    $authAdapter = $container->get(Service\AuthAdapter::class);
+                    return new AuthenticationService($authStorage, $authAdapter);
+                },
+                Service\AuthAdapter::class => function ($container) {
+                    $userTable = $container->get(Model\UsersTable::class);
+                    return new Service\AuthAdapter($userTable);
+                },
+                Service\AuthManager::class => function ($container) {
+                    $authenticationService = $container->get(AuthenticationService::class);
+                    try {
+                        $sessionManager = $container->get(SessionManager::class);
+                    } catch (\Exception $e) {
+                        if (strpos($e->getMessage(), 'Session validation failed') === false) {
+                            throw $e;
+                        }
+                        session_regenerate_id(true);
+                        session_reset();
+                        $sessionManager = $locator->get(SessionManager::class);
+                    }
+                    $config = $container->get('config');
+                    $config = isset($config['access_filter']) ? $config['access_filter'] : [];
+                    return new Service\AuthManager($authenticationService, $sessionManager, $config);
+                },
+            ],
+        ];
+    }
+
+    public function onBootstrap(MvcEvent $e)
+    {
+        $eventManager = $e->getApplication()->getEventManager();
+        $sharedEventManager = $eventManager->getSharedManager();
+        $sharedEventManager->attach(AbstractActionController::class, MvcEvent::EVENT_DISPATCH, [$this, 'onDispatch'], 100);
+    }
+
+    /**
+     * Execute the request
+     *
+     * @param  MvcEvent $e
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    public function onDispatch(MvcEvent $e)
+    {
+        $serviceManager = $e->getApplication()->getServiceManager();
+        $controller = $e->getTarget();
+        $controllerName = $e->getRouteMatch()->getParam('controller', null);
+        $actionName = $e->getRouteMatch()->getParam('action', null);
+
+        $actionName = str_replace('-', '', lcfirst(ucwords($actionName, '-')));
+        $authManager = $serviceManager->get(Service\AuthManager::class);
+        $authService = $serviceManager->get(AuthenticationService::class);
+
+        if (!$authManager->filterAccess($controllerName, $actionName)) {
+            return $controller->redirect()->toRoute(
+                $authService->hasIdentity()
+                ? '403'
+                : 'home'
+            );
+        }
+
+    }
+}

@@ -1,0 +1,44 @@
+<?php
+namespace Auth\Model;
+
+class User
+{
+    public $id;
+    public $name;
+    public $firstname;
+    public $email;
+    public $notifynotfound = false;
+    public $admin = false;
+    public $superadmin = false;
+    public $created_at;
+    public $notification_date;
+
+    public function exchangeArray(array $data)
+    {
+        $this->id = !empty($data['id']) ? (int) $data['id'] : null;
+        $this->name = !empty($data['name']) ? $data['name'] : null;
+        $this->firstname = !empty($data['firstname']) ? $data['firstname'] : null;
+        $this->email = !empty($data['email']) ? $data['email'] : null;
+        $this->notifynotfound = !empty($data['notifynotfound']) ? (bool) $data['notifynotfound'] : false;
+        $this->admin = !empty($data['admin']) ? (bool) $data['admin'] : false;
+        $this->superadmin = !empty($data['superadmin']) ? (bool) $data['superadmin'] : false;
+        $this->created_at = !empty($data['created_at']) ? $data['created_at'] : null;
+        $this->notification_date = !empty($data['notification_date']) ? $data['notification_date'] : null;
+    }
+
+    public function isAdmin()
+    {
+        return (bool) $this->admin;
+    }
+
+    public function isSuperAdmin()
+    {
+        return (bool) $this->superadmin;
+    }
+
+    public function __toString()
+    {
+        return $this->email;
+    }
+
+}

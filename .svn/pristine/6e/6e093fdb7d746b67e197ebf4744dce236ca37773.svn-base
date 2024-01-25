@@ -1,0 +1,225 @@
+<?php
+$title = $this->translate('my shorturl list');
+$this->headTitle($title);
+?>
+<div class="filter"></div>
+<div class="row view-header">
+    <div class="col col-xs-4">
+        <h3>
+            <?php if ($this->isSearchResult): ?>
+                <?php echo $this->translate('Search Result:') . " " . $this->rowsCount . " " . $this->translatePlural('match', 'matches', $this->rowsCount); ?>
+            <?php else: ?>
+                <?php echo $title; ?>
+            <?php endif;?>
+        </h3>
+    </div>
+    <div class="col col-xs-5">
+        <form class="form-inline">
+            <div class="row">
+                <div class="col-sm-6">
+                    <label><?php echo $this->translate('Filter'); ?></label>
+                    <select id="su-filter" class="default form-control input-sm">
+                        <option <?php if ($this->filter == 3) {
+    echo 'selected="1"';
+}
+?> value="3"><?php echo $this->translate('All'); ?></option>
+                        <option <?php if ($this->filter == 1) {
+    echo 'selected="1"';
+}
+?> value="1"><?php echo $this->translate('Only my Urls'); ?></option>
+                        <option <?php if ($this->filter == 2) {
+    echo 'selected="1"';
+}
+?> value="2"><?php echo $this->translate('Only Shared Urls'); ?></option>
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label><?php echo $this->translate('Domain'); ?>: </label>
+                    <select id="su-domains" class="default form-control input-sm" style="width: 150px">
+                        <option <?php if ($this->domainParam == 'all') {
+    echo 'selected="1"';
+}
+?> value="all"><?php echo $this->translate('All'); ?></option>
+                        <?php
+foreach ($this->domains as $key => $domain):
+?>
+                            <option <?php if ($this->domainParam == $key) {
+    echo 'selected="1"';
+}
+?> value="<?php echo $key; ?>"><?php echo $domain; ?></option>
+                        <?php endforeach;?>
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col col-xs-3 add-shorturl text-right">
+        <a role="button" class="btn-success btn" href="<?php echo $this->url('gui', ['action' => 'create']); ?>">
+            <span aria-hidden="true" class="glyphicon glyphicon-plus-sign"></span>
+            <?php echo $this->translate('create new shorturl'); ?>
+        </a>
+    </div>
+</div>
+<div class="row">
+    <div class="col col-md-12">
+        <?php if (empty($this->list)): ?>
+            <div class="alert alert-dismissible alert-danger">
+                <?php echo $this->translate('no data found'); ?>
+            </div>
+        <?php else: ?>
+
+            <?php if (!empty($this->newShortUrlExists)): ?>
+            <div class="alert alert-dismissible alert-success">
+                <?php echo $this->translate('Short Url successfully created'); ?>
+            </div>
+            <?php endif;?>
+            <?php if (!empty($this->luid)): ?>
+            <div class="alert alert-dismissible alert-success">
+                <?php echo $this->translate('Short Url successfully updated'); ?>
+            </div>
+            <?php endif;?>
+
+            <?php
+$sort = $this->queryParams['sort'];
+$type = $this->queryParams['order'];
+$type = $type === "desc" ? "asc" : "desc";
+$domainParams = array();
+$domain = $this->queryParams['domain'];
+$filter = $this->queryParams['filter'];
+if (!empty($domain)) {
+    $domainParams['domain'] = $domain;
+}
+
+if (!empty($filter)) {
+    $domainParams['filter'] = $filter;
+}
+
+?>
+            <table class="white-link table table-striped table-hover ">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>
+                        <a href="<?php echo $this->url('gui', array('sort' => "short_url", 'order' => $type)); ?>">
+                            <?php echo $this->translate('Shorturl'); ?>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="<?php echo $this->url('gui', [], ['query' => ['sort' => "target_url", 'order' => $type]]); ?>">
+                            <?php echo $this->translate('targeturl'); ?>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="<?php echo $this->url('gui', [], ['query' => array_merge(['sort' => "visits", 'order' => $type], $domainParams)]); ?>">
+                        <?php echo $this->translate('visits count'); ?>
+                        </a>
+                    </th>
+                    <th> <a href="<?php echo $this->url('gui', [], ['query' => ['sort' => "status", 'order' => $type]]); ?>">
+                        <?php echo $this->translate('Status'); ?>
+                        </a>
+                    </th>
+                    <th class="text-right"><?php echo $this->translate('actions'); ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+
+function displayTargetUrl($url)
+{
+    if (strlen($url) > 50) {
+        return '<span title="' . $url . '">' . mb_substr($url, 0, 50) . ' ... </span>';
+    }
+    return $url;
+}
+
+foreach ($this->list as $list):
+    $isOwner = $this->model->isOwner(Model_User::getUserIdByLdapUidWithodEmailCheck(), $list['id']);
+    $page = $this->queryParams['page'];
+    $ownUrl = ($list['user_id'] === $this->currentUserId);
+
+    $reminderWeeks = (int) Services_Ini::get(array("reminder1", "weeks_until_expiration"));
+    $expiryDateInSeconds = strtotime($list['expiry_date']);
+    $isExpired = $expiryDateInSeconds < time();
+    $willExpireSoon = !$isExpired && $expiryDateInSeconds < time() + $reminderWeeks * 604800; // weeks until expiration
+
+    $params = array(
+        'id' => $list['id'],
+        'page' => empty($page) ? 1 : $page,
+        'status' => empty($list['status']) ? 'inactive' : 'active',
+    );
+    ?>
+                    <tr <?php echo ($this->newShortUrlExists == $list['id'] || $this->luid == $list['id']) ? 'style="background:#DFF0D8"' : ''; ?>>
+                        <td class="shared-status"><?php if (!$ownUrl): ?><span aria-hidden="true" class="glyphicon glyphicon-user" title="<?php echo sprintf($this->translate('shared'), $list['name'] . ', ' . $list['firstname']); ?>" data-placement="right" data-toggle="tooltip"></span><?php endif;?></td>
+                        <td><a href="http://<?php echo $list['short_url']; ?>" target="_blank"><?php echo $list['short_url']; ?></a></td>
+                        <td><?php echo displayTargetUrl($list['target_url']); ?></td>
+                        <td align="center">
+                            <a href="<?php echo $this->url('gui', ['action' => 'statistic'], ['query' => ['id' => $list['id']]]); ?>">
+                                <strong><?php echo $list['visits']; ?></strong>
+                            </a>
+                        </td>
+                        <td align="center">
+                            <?php if ($params['status'] == 'active' && !$isExpired && !$willExpireSoon): ?>
+                                <span aria-hidden="true" class="active-status glyphicon glyphicon-ok" data-toggle="tooltip" title="<?php echo $this->translate('Active'); ?>"></span>
+                            <?php elseif ($params['status'] == 'inactive'): ?>
+                                <span aria-hidden="true" class="inactive-status glyphicon glyphicon-remove" data-toggle="tooltip" title="<?php echo $this->translate('Inactive'); ?>"></span>
+                            <?php elseif ($isExpired): ?>
+                                <span aria-hidden="true" class="expired-status glyphicon glyphicon-time" data-toggle="tooltip" title="<?php echo sprintf($this->translate('expired'), $list['expiry_date']); ?>"></span>
+                            <?php elseif ($willExpireSoon): ?>
+                                <span aria-hidden="true" class="expiresoon-status glyphicon glyphicon-time" data-toggle="tooltip" title="<?php echo sprintf($this->translate('will expire soon'), $list['expiry_date']); ?>"></span>
+                            <?php endif;?>
+                        </td>
+                        <td class="actions text-right">
+                            <?php
+if ($isOwner) {
+    echo $this->actionIcons($params, $this, $list['id']);
+} else {
+    echo '<a title="' . $this->translate('Information') . '"
+                                    href="' . $this->url('gui', ['action' => 'info'], ['query' => $params]) . '"
+                                    data-action="information"
+                                    data-id="' . $list['id'] . '"
+                                    data-toggle="ajaxModal"
+                                    ><span aria-hidden="true" class="glyphicon glyphicon-info-sign"></span></a>';
+}
+?>
+
+                        </td>
+                    </tr>
+                <?php endforeach;?>
+                </tbody>
+            </table>
+            <?php echo $this->list; ?>
+        <?php endif;?>
+    </div>
+</div>
+<script type="text/javascript">
+$(function () {
+
+    var makeFilterDomainRedirect = function() {
+        var filterValue = parseInt($('#su-filter').val());
+        var domainValue = $('#su-domains').val();
+        var searchValue = $('.search input[name=q]').val();
+        var sort = '<?php echo $this->queryParams['sort']; ?>';
+        var order = '<?php echo $this->queryParams['order']; ?>';
+        var params  = sort === '' ? '' : 'sort/' + sort + '/order/' + order + '/';
+        if (filterValue > 0) {
+            params += 'filter/' + filterValue;
+        }
+
+        if(domainValue) {
+            params += '/domain/' + domainValue;
+        }
+
+        if ('string' === typeof searchValue && searchValue.length > 0) {
+            params += '?q=' + searchValue;
+        }
+        var targetUrl = '<?php echo $this->url('gui'); ?>' + params;
+        window.location.href = targetUrl;
+    };
+
+    $("#su-filter, #su-domains").on('change', function(){
+        makeFilterDomainRedirect();
+    });
+
+    $('[data-toggle="tooltip"]').tooltip();
+})
+</script>

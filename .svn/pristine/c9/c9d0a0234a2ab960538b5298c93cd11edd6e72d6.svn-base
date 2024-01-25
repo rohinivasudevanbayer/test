@@ -1,0 +1,94 @@
+<?php
+declare(strict_types = 1);
+
+namespace Shorturl\Cronjob;
+
+use PDO;
+use Application\Service\MailSender;
+
+require __DIR__ . '/../../../../vendor/autoload.php';
+
+abstract class Base
+{
+
+    protected $dbh;
+
+    protected $config = [];
+
+    protected $translation = [];
+
+    public function __construct()
+    {
+        $this->_setConfig();
+        $this->_setTranslation();
+        $this->_dbConnect();
+    }
+
+    protected function _dbConnect()
+    {
+        try {
+            $this->dbh = new PDO($this->config['db']['dsn'], $this->config['db']['username'], $this->config['db']['password']);
+            $this->dbh->query('SET CHARACTER SET "utf8"');
+            $this->dbh->query('SET NAMES "utf8"');
+        } catch (PDOException $e) {
+            echo $e->getMessage();
+        }
+    }
+
+    protected function _setConfig()
+    {
+        $confDir = __DIR__ . '/../../../../config/autoload/';
+        $this->config = include $confDir . 'global.php';
+        if (file_exists($confDir . 'local.php')) {
+            $this->config = array_merge($this->config, include $confDir . 'local.php');
+        }
+    }
+
+    protected function _setTranslation($lang = 'en')
+    {
+        $languagesDir = __DIR__ . '/../../../../data/languages/';
+        $this->translation = include $languagesDir . $lang . '.php';
+    }
+
+    protected function _getUserById($userId)
+    {
+        if ($users = $this->dbh->query('SELECT * FROM `su_users` WHERE `id` = ' . $this->dbh->quote($userId))) {
+            foreach ($users as $user) {
+                return $user;
+                break;
+            }
+        }
+        return false;
+    }
+    
+    protected function _setTo($user)
+    {
+        return ['name' => $user['firstname'] . ' ' . $user['name'], 'email' => $user['email']];
+    }
+
+    protected function _prepareAndSendReminder($userId, $subjectKey, $messageKey, $shortUrls, $weeksUntilExpiration)
+    {
+        if ($user = $this->_getUserById($userId)) {
+            $to = $this->_setTo($user);
+            $subject = $this->translation[$subjectKey];
+            $message = $this->translation[$messageKey];
+            $message = sprintf($message, $user['firstname'] . ' ' . $user['name'], $weeksUntilExpiration, $shortUrls);
+            $this->_sendNotification($to, $subject, $message);
+        }
+    }
+    
+    protected function _prepareAndSendNotification($user, $subjectKey, $messageKey, $shortUrls)
+    {
+        $to = $this->_setTo($user);
+        $subject = $this->translation[$subjectKey];
+        $message = $this->translation[$messageKey];
+        $message = sprintf($message, $shortUrls);
+        $this->_sendNotification($to, $subject, $message);
+    }
+
+    protected function _sendNotification($to, $subject, $message)
+    {
+        $mailSender = new MailSender($this->config);
+        $mailSender->sendMail($this->config['notification']['from'], $to, $replyTo = [], $subject, $message);
+    }
+}

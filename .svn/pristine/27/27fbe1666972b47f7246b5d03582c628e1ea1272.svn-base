@@ -1,0 +1,3 @@
+<h1><?=$this->translate('no permissions')?></h1>
+<p><?=$this->translate('no access')?></p>
+<a href="<?=$this->url('shorturl')?>" class="btn btn-default"><?=$this->translate('OK')?></a>

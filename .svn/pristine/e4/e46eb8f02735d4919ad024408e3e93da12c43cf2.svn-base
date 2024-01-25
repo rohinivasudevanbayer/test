@@ -1,0 +1,112 @@
+<?=$this->doctype()?>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <?=$this->headTitle('ShortUrl')->setSeparator(' - ')->setAutoEscape(false)?>
+
+        <?=$this->headMeta()
+->appendName('viewport', 'width=device-width, initial-scale=1.0')
+->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+?>
+
+        <?=$this->headLink(['rel' => 'shortcut icon', 'type' => 'image/vnd.microsoft.icon', 'href' => $this->basePath() . '/favicon.ico'])
+->appendStylesheet($this->basePath('css/bootstrap.css'))
+->appendStylesheet($this->basePath('css/datepicker.css'))
+->appendStylesheet($this->basePath('css/custom.css'))
+?>
+
+        <!-- Scripts -->
+        <?=$this->headScript()
+->prependFile($this->basePath('js/jquery-1.10.2.min.js'))
+->appendFile($this->basePath('js/html5shiv.js'), 'text/javascript', array('conditional' => 'lt IE 9'))
+->appendFile($this->basePath('js/respond.min.js'), 'text/javascript', array('conditional' => 'lt IE 9'))
+->appendFile($this->basePath('js/jquery.cookie.js'))
+->appendFile($this->basePath('js/bootstrap-datepicker.js'))
+->appendFile($this->basePath('js/global.js'))
+->appendFile($this->basePath('js/jquery.qrcode.min.js'))
+->appendFile($this->basePath('js/canvas2image.js'))
+->appendFile($this->basePath('js/bootstrap-components/tooltip.js'))
+?>
+    </head>
+    <body>
+        <?php // numSoonExpUrls msg ?>
+        <div class="container">
+            <header>
+                <div class="row">
+                    <div id="bayer-slogan" class="col-xs-4">
+                        <div class="logo navbar-text">
+                            <a href="<?=$this->url('shorturl')?>">
+                                <h3><?=$this->translate('header-headline')?></h3>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-xs-8 navbar-form navbar-right " id="metanav" style="text-align:end">
+                        <div class="box-maininfo">
+                            <?php if ($this->layout()->showProfileLink): ?>
+                            <div class="navbar-text text-left">
+                                <strong><a href="<?=$this->url('user', ['action' => 'profile'])?>" class="text-bold"><?=$this->translate('My Profile')?></a></strong> <?=$this->userName?>
+                            </div>
+                            <?php endif;?>
+
+                            <?php if ($this->layout()->showLogout): ?>
+                            <div class="navbar-text text-left">
+                                <a href="<?=$this->url('logout')?>"><?=$this->translate('Logout')?></a>
+                            </div>
+                            <?php endif;?>
+
+                            <div class=" navbar-text text-left">
+                                <div id="language-select" >
+                                    <form class="form-inline" >
+                                        <div class="form-group">
+                                        <label for="langSelect" class="control-label"><?=$this->translate('Language')?></label>
+                                        <select class="language-select default form-control input-sm" id="langSelect">
+                                            <?php foreach ($this->layout()->languages as $lang): ?>
+                                                <option
+                                                <?=$this->layout()->activeLanguage === $lang ? 'selected' : ""?>
+                                                value="<?=$lang?>">
+                                                    <?=$lang?>
+                                                </option>
+                                            <?php endforeach;?>
+                                        </select>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class=" navbar-text" id="bayer-logo">
+                                <a class="logo" href="http://www.bayer.com" target="_blank">
+                                    <!--[if lt IE 9]><img width="72" src="//shared.bayer.com/img/logo-print.png" alt="Bayer"/><![endif]--><!--[if gt IE 8]><!-->
+                                    <object width="72" data="//shared.bayer.com/img/logo.svg" type="image/svg+xml">
+                                        <img width="72" src="//shared.bayer.com/img/logo-print.png" alt="Bayer"/>
+                                    </object><!--<![endif]-->
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="breadcrumb">
+                    TODO - Breadcrumb
+                <?php /* TODO
+<?=$this->partial('partial/breadcrumb.phtml', $this->breadcrumbData)?>
+ */?>
+                    <?php if ($this->layout()->showSearch): ?>
+                        <?=$this->partial('partial/search.phtml', $this->searchData)?>
+                    <?php endif;?>
+                </ul>
+            </header>
+
+            <div id="content">
+                <?=$this->content?>
+            </div>
+
+            <footer>
+                <div class="ifooter">
+                    <div class="cright">Copyright &copy; Bayer AG</div>
+                </div>
+            </footer>
+        </div>
+
+    </body>
+</html>

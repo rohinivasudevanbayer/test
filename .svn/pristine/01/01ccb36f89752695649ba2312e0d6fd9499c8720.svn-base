@@ -1,0 +1,68 @@
+<?php
+$title = $this->translate('Login');
+$this->headTitle($title);
+
+$form->setAttributes(['class' => 'su-login__form']);
+$form->get('email')
+    ->setAttributes([
+        'class' => 'form-control',
+        'autofocus' => true,
+    ])
+    ->setLabel($this->translate('E-Mail'))
+    ->setLabelAttributes(['class' => 'row col-md-12 su-login__fieldset']);
+
+$form->get('password')
+    ->setAttributes([
+        'class' => 'form-control',
+    ])
+    ->setLabel('password')
+    ->setLabelAttributes(['class' => 'row col-md-12 su-login__fieldset']);
+
+$form->get('submit')
+    ->setAttributes([
+        'class' => 'btn btn-primary submit-ajax-btn su-login__submit-btn',
+        'value' => $this->translate('Login'),
+    ]);
+
+$formRowHelper = $this->formRow();
+$formRowHelper->setRenderErrors(false);
+
+$form->prepare();
+?>
+
+<h3><?=$title?></h3>
+<div class="row">
+    <div class="col-lg-8">
+        <?php if ($isLoginError): ?>
+            <div class="alert alert-dismissible alert-danger">
+                <?=$this->translate('credentials-not-valid')?>
+            </div>
+        <?php endif;?>
+        <div class="well bs-component">
+            <?=$this->form($form)?>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <ul class="list-group">
+            <li class="list-group-item">
+                <a href="<?=$this->url('auth', ['action' => 'lostpassword'])?>">
+                    <span aria-hidden="true" class="glyphicon glyphicon-question-sign"></span>
+                    <?=$this->translate('Lost Password?')?>
+                </a>
+            </li>
+            <li class="list-group-item">
+                <a href="<?=$this->url('auth', ['action' => 'fullregister'])?>">
+                    <span aria-hidden="true" class="glyphicon glyphicon-user"></span>
+                    <?=$this->translate('Register')?>
+                </a>
+            </li>
+            <li class="list-group-item">
+                <a href="<?=$this->url('static', ['action' => 'contact'])?>">
+                    <span aria-hidden="true" class="glyphicon glyphicon-envelope"></span>
+                    <?=$this->translate('Report a problem')?>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+

@@ -1,0 +1,114 @@
+packages:
+  yum:
+    mod24_auth_openidc.x86_64: []
+    
+files:
+  "/etc/httpd/conf.d/vhost.conf":
+    mode: "000644"
+    owner: root
+    group: root
+    encoding: plain
+    content: |
+      
+      OIDCProviderMetadataURL https://login.microsoftonline.com/fcb2b37b-5da0-466b-9b83-0014b67a7c78/v2.0/.well-known/openid-configuration
+      OIDCClientID 42ec91b1-32c8-4859-93e9-d77d1ac4d5c2
+      OIDCClientSecret S9C0WI/nk1HvG8Q-FJKnyq]wI[e8cG8r
+      OIDCCryptoPassphrase xyfdaadadsaanyway
+      OIDCSessionInactivityTimeout 7200
+      
+      <VirtualHost *:80>
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+        
+        SetEnv APPLICATION_ENV "production"
+        
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+      </VirtualHost>
+      
+      <VirtualHost *:443>
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+        
+        SetEnv APPLICATION_ENV "production"
+                
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        <Location /shorturl>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+      </VirtualHost>
+      
+      <VirtualHost *:443>
+        ServerName test.bayshorturl.com
+        
+        OIDCRedirectURI https://test.bayshorturl.com/shorturl/_return
+        
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+        
+        SetEnv APPLICATION_ENV "development"
+                
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        <Location /shorturl>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+      </VirtualHost>
+      
+      <VirtualHost *:443>
+        ServerName go.cnb
+        
+        OIDCRedirectURI https://go.cnb/shorturl/_return
+        
+        SetEnv APPLICATION_ENV "production"
+        
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+                
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        <Location /shorturl>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+      </VirtualHost>
+      
+      <VirtualHost *:443>
+        ServerName go.bayer.com
+        
+        OIDCRedirectURI https://go.bayer.com/shorturl/_return
+        
+        SetEnv APPLICATION_ENV "production"
+        
+        DocumentRoot "/var/app/current/public"
+        php_admin_value open_basedir "/var/app/current/"
+                
+        <Directory "/var/app/current/public">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        <Location /shorturl>
+            AuthType openid-connect
+            Require valid-user
+        </Location>
+      </VirtualHost>

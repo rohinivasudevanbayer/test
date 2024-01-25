@@ -1,0 +1,64 @@
+<?php
+declare (strict_types = 1);
+
+namespace Shorturl;
+
+use Laminas\Router\Http\Segment;
+
+return [
+    'router' => [
+        'routes' => [
+            'redirect' => [
+                'type' => Segment::class,
+                'priority' => 5,
+                'options' => [
+                    'route' => '/:urlcode',
+                    'constraints' => [
+                        'urlcode' => '[a-zA-Z0-9@%\/.?!=_-]*',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\RedirectController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+            'shorturl' => [
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/shorturl[/:action[/:id]]',
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ShorturlController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
+            'revisions' => [
+                'type' => Segment::class,
+                'priority' => 10,
+                'options' => [
+                    'route' => '/shorturl/shorturl/revisions[/:id]',
+                    'constraints' => [
+                        'id' => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\ShorturlController::class,
+                        'action' => 'revisions',
+                    ],
+                ],
+            ],
+        ],
+    ],
+    'view_manager' => [
+        'template_path_stack' => [
+            'shorturl' => __DIR__ . '/../view',
+        ],
+        'strategies' => [
+            'ViewJsonStrategy',
+        ],
+    ],
+];

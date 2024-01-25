@@ -1,0 +1,14 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+
+class ShorturlTable extends AbstractTable
+{
+    public function getActiveShortUrl($urlCode)
+    {
+        $rowset = $this->tableGateway->select(['url_code' => $urlCode, 'status' => '1']);
+        $row = $rowset->current();
+        return $row;
+    }
+}

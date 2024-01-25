@@ -1,0 +1,48 @@
+<?php
+namespace Auth\Model;
+
+use Application\Model\AbstractTable;
+use Laminas\Db\Sql\Select;
+
+class UsersTable extends AbstractTable
+{
+
+    /**
+     * Retrieve a use by his email and password (= returns only authenticated user)
+     *
+     * @param string $email
+     * @param string $password
+     * @throws \RuntimeException if the user is not found
+     * @return Auth\Model\User
+     */
+    public function findAuthenticatedUser($email, $password): User
+    {
+        $user = $this->findByEmail($email);
+        if ($user && !password_verify($password, $user->password)) {
+            throw new \RuntimeException('Invalid credentials');
+        }
+        return $user;
+    }
+
+    /**
+     * Retrieve a user by his email
+     *
+     * @param string $email
+     * @param string $password
+     * @throws RuntimeException if the user is not found
+     * @return Auth\Model\User
+     */
+    public function findByEmail($email): User
+    {
+        $rowset = $this->tableGateway->select(['email' => $email]);
+        $row = $rowset->current();
+        if (!$row) {
+            throw new \RuntimeException(sprintf(
+                'Could not find row with identifier %s',
+                $email
+            ));
+        }
+
+        return $row;
+    }
+}

@@ -1,0 +1,47 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Shorturl\Model\ShorturlTable;
+use Shorturl\Model\ShorturlVisits;
+use Shorturl\Model\ShorturlVisitsTable;
+
+class RedirectController extends AbstractActionController
+{
+    private $shortUrlTable;
+    private $shortUrlVisitsTable;
+
+    public function __construct(ShorturlTable $shortUrlTable, ShorturlVisitsTable $shortUrlVisitsTable)
+    {
+        $this->shortUrlTable = $shortUrlTable;
+        $this->shortUrlVisitsTable = $shortUrlVisitsTable;
+    }
+
+    public function indexAction()
+    {
+        $domain = $this->getDomain();
+        $urlCode = $this->params()->fromRoute('urlcode', false);
+        if ($domain && $urlCode) {
+            $url = $this->shortUrlTable->getActiveShortUrl($domain, $urlCode);
+            if ($url && !$url->isExpired()) {
+                $url->visits++;
+                $this->shortUrlTable->save($url);
+                $visit = new ShorturlVisits();
+                $visit->shorturl_id = $url->id;
+                $this->shortUrlVisitsTable->save($visit);
+                $this->redirect()->toUrl($url->target_url);
+                return;
+            }
+        }
+        $this->redirect()->toRoute('gui');
+    }
+
+    private function getDomain()
+    {
+        $domain = false;
+        if (!empty($_SERVER['HTTP_HOST'])) {
+            $domain = $_SERVER['HTTP_HOST'];
+        }
+        return $domain;
+    }
+}

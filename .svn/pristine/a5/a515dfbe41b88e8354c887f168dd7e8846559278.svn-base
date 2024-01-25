@@ -1,0 +1,43 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+use Laminas\Db\ResultSet\ResultSetInterface;
+use Laminas\Db\Sql\Select;
+
+class ShorturlsTable extends AbstractTable
+{
+
+    /**
+     * Retrieve an active shorturl with the given $domain and $urlCode if existing
+     *
+     * @param string $shorturl
+     * @return Shorturl | null
+     */
+    public function getActiveShorturl($shorturl)
+    {
+        $rowset = $this->tableGateway->select([
+            'short_url' => $shorturl,
+            'status' => '1',
+        ]);
+        $row = $rowset->current();
+        return $row;
+    }
+
+    /**
+     * Fetches a list of shorturls
+     *
+     * @param integer $limit
+     *            The maximum amount of result rows
+     * @return ResultSetInterface
+     */
+    public function fetchList($limit = 0): ResultSetInterface
+    {
+        $selectFactory = function (Select $select) use ($limit) {
+            if ($limit > 0) {
+                $select->limit($limit);
+            }
+        };
+        return $this->tableGateway->select($selectFactory);
+    }
+}

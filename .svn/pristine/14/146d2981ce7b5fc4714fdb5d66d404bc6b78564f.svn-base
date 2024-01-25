@@ -1,0 +1,139 @@
+<?php
+namespace Auth\Model;
+
+use Application\Model\AbstractTable;
+use Auth\Model\User;
+use Laminas\Db\ResultSet\ResultSetInterface;
+use Laminas\Db\Sql\Select;
+use Laminas\Db\TableGateway\TableGatewayInterface;
+use Shorturl\Model\Admins2DomainsTable;
+use Shorturl\Model\Shorturl;
+use Shorturl\Model\Shorturls2UsersTable;
+use Shorturl\Model\ShorturlsTable;
+
+class UsersTable extends AbstractTable
+{
+    /** @var string TABLENAME The name of the table */
+    const TABLENAME = 'su_users';
+
+    /** @var Shorturl\Model\Shorturls2UsersTable */
+    private $shorturls2UsersTable;
+
+    /** @var Shorturl\Model\Admins2DomainsTable */
+    private $admins2DomainsTable;
+
+    /**
+     * Constructor
+     *
+     * @param TableGatewayInterface $usersTableGateway
+     */
+    public function __construct(TableGatewayInterface $usersTableGateway, Shorturls2UsersTable $shorturls2UsersTable, Admins2DomainsTable $admins2DomainsTable)
+    {
+        parent::__construct($usersTableGateway);
+        $this->shorturls2UsersTable = $shorturls2UsersTable;
+        $this->admins2DomainsTable = $admins2DomainsTable;
+    }
+
+    /**
+     * Retrieve a use by his email and password (= returns only authenticated user)
+     *
+     * @param string $email
+     * @param string $password
+     * @throws \RuntimeException if the user is not found
+     * @return Auth\Model\User
+     */
+    public function findAuthenticatedUser(string $email, string $password): User
+    {
+        $user = $this->findByEmail($email);
+        if ($user && !password_verify($password, $user->password)) {
+            throw new \RuntimeException('Invalid credentials');
+        }
+        return $user;
+    }
+
+    /**
+     * Find the user by given email or create the user if not exists
+     *
+     * This is used by OAuth authentication
+     *
+     * @param string $email
+     * @param string $lastname
+     * @param string $firstname
+     * @return Auth\Model\User
+     */
+    public function findOrCreateUser(string $email, string $lastname, string $firstname): User
+    {
+        try {
+            $user = $this->findByEmail($email);
+        } catch (\Exception $e) {
+            $user = new User();
+            $user->email = $email;
+            $user->firstname = $firstname;
+            $user->name = $lastname;
+            $this->save($user);
+        }
+        return $user;
+    }
+
+    /**
+     * Retrieve a user by his email
+     *
+     * @param string $email
+     * @param string $password
+     * @throws RuntimeException if the user is not found
+     * @return Auth\Model\User
+     */
+    public function findByEmail(string $email): User
+    {
+        $rowset = $this->tableGateway->select(['email' => $email]);
+        $row = $rowset->current();
+        if (!$row) {
+            throw new \RuntimeException(sprintf(
+                'Could not find row with identifier %s',
+                $email
+            ));
+        }
+
+        return $row;
+    }
+
+    /**
+     * Retrieve all the owner for the given shorturl (without owner)
+     *
+     * @param integer $shorturlId
+     * @return \Auth\Model\User
+     */
+    public function getOwnerOfShorturl(int $shorturlId)
+    {
+        $rs = $this->tableGateway->select(function (Select $select) use ($shorturlId) {
+            $select->join(ShorturlsTable::TABLENAME, ShorturlsTable::TABLENAME . '.user_id = ' . self::TABLENAME . '.id', [])
+                ->where([ShorturlsTable::TABLENAME . '.id' => $shorturlId]);
+        });
+        return count($rs) ? $rs->current() : null;
+    }
+
+    /**
+     * Retrieve all shared users for the given shorturl (without owner)
+     *
+     * @param integer $shorturlId
+     * @return ResultSetInterface
+     */
+    public function getSharedUsersForShorturl(int $shorturlId): ResultSetInterface
+    {
+        return $this->tableGateway->select(function (Select $select) use ($shorturlId) {
+            $select->join(Shorturls2UsersTable::TABLENAME, Shorturls2UsersTable::TABLENAME . '.user_id = ' . self::TABLENAME . '.id', [])
+                ->where([Shorturls2UsersTable::TABLENAME . '.shorturl_id' => $shorturlId])
+                ->order(self::TABLENAME . '.name');
+        });
+    }
+
+    public function hasPermission(User $user, Shorturl $shorturl): bool
+    {
+        return
+        $user->isSuperAdmin()
+        || ($user->isAdmin() && $this->admins2DomainsTable->isAdmin($user->id, $shorturl->domain_id))
+        || $shorturl->isOwnedBy($user)
+        || $this->shorturls2UsersTable->isShare($shorturl->id, $user->id)
+        ;
+    }
+}

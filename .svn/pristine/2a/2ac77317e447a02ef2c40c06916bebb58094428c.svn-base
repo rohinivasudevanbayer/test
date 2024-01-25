@@ -1,0 +1,47 @@
+<?php
+namespace Shorturl\Model;
+
+class Shorturl
+{
+    public $id;
+    public $user_id;
+    public $short_url;
+    public $target_url;
+    public $url_code;
+    public $domain;
+    public $status;
+    public $visits;
+    public $qr_code_settings;
+    public $sent_reminder1;
+    public $sent_reminder2;
+    public $sent_expiration_notification;
+    public $created_at;
+    public $updated_at;
+    public $expiry_date;
+    public $updated_by;
+
+    public function exchangeArray(array $data)
+    {
+        $this->id = !empty($data['id']) ? $data['id'] : null;
+        $this->user_id = !empty($data['user_id']) ? $data['user_id'] : null;
+        $this->short_url = !empty($data['short_url']) ? $data['short_url'] : null;
+        $this->target_url = !empty($data['target_url']) ? $data['target_url'] : null;
+        $this->url_code = !empty($data['url_code']) ? $data['url_code'] : null;
+        $this->domain = !empty($data['domain']) ? $data['domain'] : null;
+        $this->status = !empty($data['status']) ? $data['status'] : null;
+        $this->visits = !empty($data['visits']) ? $data['visits'] : null;
+        $this->qr_code_settings = !empty($data['qr_code_settings']) ? $data['qr_code_settings'] : null;
+        $this->sent_reminder1 = !empty($data['sent_reminder1']) ? $data['sent_reminder1'] : null;
+        $this->sent_reminder2 = !empty($data['sent_reminder2']) ? $data['sent_reminder2'] : null;
+        $this->sent_expiration_notification = !empty($data['sent_expiration_notification']) ? $data['sent_expiration_notification'] : null;
+        $this->created_at = !empty($data['created_at']) ? $data['created_at'] : null;
+        $this->updated_at = !empty($data['updated_at']) ? $data['updated_at'] : null;
+        $this->expiry_date = !empty($data['expiry_date']) ? $data['expiry_date'] : null;
+        $this->updated_by = !empty($data['updated_by']) ? $data['updated_by'] : null;
+    }
+
+    public function isExpired()
+    {
+        return time() > strtotime($this->expiry_date);
+    }
+}

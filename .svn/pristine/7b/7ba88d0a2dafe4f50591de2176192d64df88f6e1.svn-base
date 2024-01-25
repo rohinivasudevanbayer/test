@@ -1,0 +1,36 @@
+<?php
+namespace Shorturl\Controller;
+
+use Shorturl\Model\ShorturlTable;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+    public function __construct(ShorturlTable $table)
+    {
+        $this->table = $table;
+    }
+
+    public function indexAction()
+    {
+        $this->layout()->showLogout = true;
+        return new ViewModel([
+            'shorturls' => $this->table->fetchAll(),
+        ]);
+    }
+
+    public function addAction()
+    {
+    }
+
+    public function editAction()
+    {
+    }
+
+    public function deleteAction()
+    {
+    }
+}

@@ -1,0 +1,81 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application;
+
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\MvcEvent;
+
+class Module
+{
+    public function getConfig(): array
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+
+    public function onBootstrap(MvcEvent $e)
+    {
+        $application = $e->getApplication();
+        $controller = $e->getTarget()->getMvcEvent()->getViewModel();
+        $serviceManager = $application->getServiceManager();
+
+        $config = $serviceManager->get('config');
+        $session = $serviceManager->get('SessionContainer');
+        $translator = $serviceManager->get('MvcTranslator');
+        $request = $e->getRequest();
+        $this->initLanguage($config, $session, $translator, $request);
+
+        $layoutView = $e->getApplication()->getMvcEvent()->getViewModel();
+        $authService = $serviceManager->get(AuthenticationService::class);
+        $this->initLayoutView($config, $session, $layoutView, $authService);
+    }
+
+    protected function initLayoutView(
+        array $config,
+        \Laminas\Session\Container $session,
+        $layoutView,
+        $authService
+    ) {
+        $layoutView->showLogout = false;
+        $layoutView->showProfileLink = false;
+        $layoutView->showSearch = false;
+        $layoutView->languages = $config['languages'];
+        $layoutView->activeLanguage = $session['activeLanguage'];
+        $layoutView->isLoggedIn = $authService->hasIdentity();
+        $layoutView->userName = $authService->hasIdentity() ? $authService->getIdentity() : '';
+        $layoutView->breadcrumbItems = [['label' => 'ShortURL', 'route' => $layoutView->isLoggedIn ? 'shorturl' : 'home']];
+    }
+
+    /**
+     * Setup translator language and handle language change
+     *
+     * @param array $config The application configuration
+     * @param \Laminas\Session\Container $session The session container to save the active language
+     * @param \Laminas\Mvc\I18n\Translator $translator The application translator
+     * @param \Laminas\Http\Request $request The current request (which potentially holds the language query param)
+     * @return void
+     */
+    protected function initLanguage(
+        array $config,
+        \Laminas\Session\Container $session,
+        \Laminas\Mvc\I18n\Translator $translator,
+        \Laminas\Http\Request $request
+    ) {
+        $fallbackLanguage = 'en';
+        if (!is_null($request->getQuery()->lang)) {
+            $querystringLang = $request->getQuery()->lang;
+            if (in_array($querystringLang, $config['languages'])) {
+                $session->activeLanguage = $querystringLang;
+            }
+        }
+
+        if (empty($session->activeLanguage)) {
+            $session->activeLanguage = $fallbackLanguage;
+        }
+
+        $translator
+            ->setLocale($session->activeLanguage)
+            ->setFallbackLocale($fallbackLanguage);
+    }
+
+}

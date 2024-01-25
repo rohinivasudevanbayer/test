@@ -1,0 +1,71 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application;
+
+use Laminas\Mvc\MvcEvent;
+use Service\Layout;
+
+class Module
+{
+    public function getConfig(): array
+    {
+        return include __DIR__ . '/../config/module.config.php';
+    }
+
+    public function onBootstrap(MvcEvent $e)
+    {
+        $application = $e->getApplication();
+        $serviceManager = $application->getServiceManager();
+
+        $config = $serviceManager->get('config');
+        $session = $serviceManager->get('SessionContainer');
+        $translator = $serviceManager->get('MvcTranslator');
+        $request = $e->getRequest();
+        $this->initLanguage($config, $session, $translator, $request);
+
+        $viewModel = $e->getApplication()->getMvcEvent()->getViewModel();
+        $viewModel->layout = $serviceManager->get('layout');
+    }
+
+    public function getServiceConfig()
+    {
+        return [
+            'factories' => [
+                Service\Layout::class => function ($container) {
+                    $config = $container->get('config');
+                    $session = $container->get('SessionContainer');
+                    return new Service\Layout($config, $session);
+                },
+            ],
+        ];
+    }
+
+    /**
+     * Setup translator language and handle language change
+     *
+     * @param array $config The application configuration
+     * @param \Laminas\Session\Container $session The session container to save the active language
+     * @param \Laminas\Mvc\I18n\Translator $translator The application translator
+     * @param \Laminas\Http\Request $request The current request (which potentially holds the language query param)
+     * @return void
+     */
+    protected function initLanguage(
+        array $config,
+        \Laminas\Session\Container $session,
+        \Laminas\Mvc\I18n\Translator $translator,
+        \Laminas\Http\Request $request
+    ) {
+        if (!is_null($request->getQuery()->lang)) {
+            $querystringLang = $request->getQuery()->lang;
+            if (in_array($querystringLang, $config['languages'])) {
+                $session->activeLanguage = $querystringLang;
+            }
+        }
+
+        $translator
+            ->setLocale($session->activeLanguage)
+            ->setFallbackLocale('en');
+    }
+
+}

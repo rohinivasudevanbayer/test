@@ -1,0 +1,24 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class UserController extends AbstractActionController
+{
+    protected $config;
+
+    public function __construct($config)
+    {
+        $this->config = $config;
+    }
+
+    public function profileAction()
+    {
+        return new ViewModel([
+
+        ]);
+    }
+}

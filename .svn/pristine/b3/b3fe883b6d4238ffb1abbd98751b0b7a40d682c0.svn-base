@@ -1,0 +1,64 @@
+<div class="row">
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <?=$this->translate('my data')?></h3>
+            </div>
+            <ul class="list-group my-data">
+                <li class="list-group-item">
+                    <label><?=$this->translate('firstname')?></label>
+                    <span><?=$this->layout()->user->firstname?></span>
+                </li>
+                <li class="list-group-item">
+                    <label><?=$this->translate('name')?></label>
+                    <span><?=$this->layout()->user->name?></span>
+                </li>
+                <li class="list-group-item">
+                    <label><?=$this->translate('E-Mail')?></label>
+                    <span><?=$this->layout()->user->email?></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><?=$this->translate('my statistic')?></h3>
+            </div>
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <span class="badge"><?=$this->allShortUrls?></span>
+                    <?=$this->translate('number of URLs')?>
+                </li>
+                <li class="list-group-item">
+                    <span class="badge"><?=$this->sharedUrls?></span>
+                    <?=$this->translate('number of shared URLs')?>
+                </li>
+                <li class="list-group-item">
+                    <span class="badge"><?=$this->inactiveUrls?></span>
+                    <?=$this->translate('number of inactive URLs')?>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><?=$this->translate('my populate shorturls')?></h3>
+            </div>
+
+            <?php if (count($this->myPopularUrls)): ?>
+            <ul class="list-group">
+                <?php foreach ($this->myPoulateUrls as $surl): ?>
+                <li class="list-group-item">
+                    <span class="badge" data-toggle="tooltip" data-placement="left" title="<?=$this->translate('visits count');?>"><?=$surl['visits']?></span>
+                    <a target="_blank" href="<?=$surl['target_url']?>"> <?=$surl['short_url']?> </a>
+                </li>
+                <?php endforeach?>
+            </ul>
+            <?php else: ?>
+            <div class="panel-body"><?=$this->translate('none')?></div>
+            <?php endif;?>
+        </div>
+    </div>
+</div>

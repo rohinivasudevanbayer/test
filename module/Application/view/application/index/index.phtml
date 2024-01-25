@@ -1,0 +1,84 @@
+<div class="row">
+    <div class="col-md-12 text-center">
+        <?=$this->partial('partial/index_' . $this->layout()->activeLanguage . '.phtml')?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <?php if (count($this->expiredShortUrls) > 0): ?>
+        <h4 class="alert alert-danger"><?=$this->translate('The following URLs will expire soon or are expired')?></h4>
+            <button style="margin: 0 0 15px 0;float: right;"
+            type="button"
+            class="btn btn-primary"
+            data-toggle="modal"
+            data-target="#expiry-handling"><?=$this->translate('Extend all expired')?></button>
+        <?=$this->modal()->renderTop('expiry-handling', $this->translate("Choose a period"))?>
+        <?=$this->partial('partial/expiry-handling.phtml')?>
+        <?=$this->modal()->renderBottom('expiry-handling', $this->translate('Close'), $this->translate('save'))?>
+        <table class="table table-striped table-hover">
+        <thead id="thead-expire">
+            <tr>
+                <th><?=$this->translate('Shorturl')?></th>
+                <th><?=$this->translate('targeturl')?></th>
+                <th><?=$this->translate('Status')?></th>
+                <th><?=$this->translate('Expiry Date')?></th>
+                <th class="text-right"><?=$this->translate('actions')?></th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($this->expiredShortUrls as $url): ?>
+    <?php
+$expiryDateInSeconds = strtotime($url->expiry_date);
+$isExpired = $url->isExpired();
+$willExpireSoon = $url->willExpireSoon($this->reminderWeeks);
+$status = $isExpired ? 'expired' : ($willExpireSoon ? 'expiring soon' : ($url->status == 1 ? 'active' : 'inactive'));
+$statusClass = $isExpired ? 'expired-status' : ($willExpireSoon ? 'expiresoon-status' : ($url->status == 1 ? 'active-status' : 'inactive-status'));
+?>
+            <tr>
+                <td><?=$this->escapeHtml($url->short_url)?></td>
+                <td><span title="<?=$this->escapeHtmlAttr($url->target_url)?>"><?=substr($this->escapeHtml($url->target_url), 0, 150)?></td>
+                <td class="<?=$statusClass?>"><?=$status?></td>
+                <td class="<?=$statusClass?>"><?=$this->escapeHtml($url->expiry_date)?></td>
+                <td class="actions text-right">
+                <?=$this->actionIcons($url, [], ['info', 'status', 'qrcode', 'revision', 'statistic'])?>
+                </td>
+            </tr>
+        <?php endforeach;?>
+        </tbody>
+        </table>
+        <?php endif;?>
+    </div>
+    <div class="col-xs-12 text-center">
+    <?php if (!empty($this->successMessageKey)): ?>
+        <div class="alert alert-success alert-dismissible" role="alert">
+        <?=$this->translate($this->successMessageKey)?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="<?=$this->translate('Close')?>">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        </div>
+    <?php endif;?>
+		<div class="alert alert-warning" role="alert">
+		    test12345 <?=$this->translate('Monsanto legacy disclaimer')?>
+		</div>
+        
+        <?php if (!$this->layout()->isLoggedIn): ?>
+            <div class="alert alert-warning" role="alert">
+                <?=$this->translate('Bayer network disclaimer')?>
+            </div>
+        <?php else: ?>
+            <a href="<?=$this->url('shorturl');?>" class="btn btn-success mt-5"><?=$this->translate('Manage my ShortUrls')?>
+                <span class="glyphicon glyphicon-edit ml-3" aria-hidden="true"></span>
+            </a>
+        <?php endif;?>
+    </div>
+</div>
+<?php if (!empty($this->expiredShortUrls)): ?>
+<script>
+$(function() {
+        $('#expiry-handling-save').on('click', function() {
+            var period = $('#expiry-handling-select').val();
+        location.href = '<?=$this->url('home')?>?p=' + period;
+    });
+});
+</script>
+<?php endif;?>

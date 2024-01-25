@@ -1,0 +1,46 @@
+<?php
+$element = $form->get($rowName);
+
+$elementAttributes = $element->getAttributes();
+$elementAttributes['id'] = $rowName;
+$elementAttributes['class'] = (empty($elementAttributes['class']) ? '' : $elementAttributes['class'] . ' ') . 'form-control' . ($element->getMessages() ? ' input_error' : '');
+$element->setAttributes($elementAttributes);
+
+$labelContent = $element->getLabel();
+if (empty($labelContent)) {
+    $labelContent = $element->getOption('label');
+}
+$labelContent = $this->translate($labelContent);
+
+if (!empty($elementAttributes['required'])) {
+    $requiredString = ' *';
+    if (!strstr($labelContent, $requiredString)) {
+        $labelContent = $labelContent . $requiredString;
+    }
+}
+
+// add help icons to the label if help text exists
+$helpDescriptionKey = 'help_description_field_' . $rowName;
+$helpDescription = $this->translate($helpDescriptionKey);
+if ($helpDescription !== $helpDescriptionKey) {
+    $tooltip = '<span class="info-content-box">
+    <span data-toggle="tooltip" data-placement="right" title="' . str_replace('"', '\"', $helpDescription) . '"
+    aria-hidden="true" class="glyphicon glyphicon-question-sign info-desc-btn"></span></span>';
+    if (!strstr($labelContent, $tooltip)) {
+        $labelContent = $labelContent . $tooltip;
+        $element->setLabelOptions(['disable_html_escape' => true]);
+    }
+}
+
+$labelAttributes = $element->getLabelAttributes();
+// $labelAttributes['class'] = (empty($labelAttributes['class']) ? '' : $labelAttributes['class'] . ' ');
+$labelAttributes['for'] = $rowName;
+$element->setLabelAttributes($labelAttributes);
+
+$element->setLabel($labelContent);
+?>
+<div class="form-group<?=$element->getMessages() ? ' input_error' : ''?>">
+    <?=$this->formLabel($element)?>
+    <?=$this->formElement($element)?>
+    <?=$this->formElementErrors($element)?>
+</div>

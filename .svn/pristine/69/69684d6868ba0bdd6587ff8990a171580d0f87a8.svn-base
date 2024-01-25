@@ -1,0 +1,37 @@
+<?php
+namespace Application\Model;
+
+use Laminas\Db\TableGateway\TableGatewayInterface;
+
+abstract class AbstractTable
+{
+    protected $tableGateway;
+
+    public function __construct(TableGatewayInterface $tableGateway)
+    {
+        $this->tableGateway = $tableGateway;
+    }
+
+    public function save($object)
+    {
+        $data = (array) $object;
+        $id = (int) $object->id;
+        if ($id === 0) {
+            $object->id = $this->tableGateway->insert($data);
+        } else {
+            $this->tableGateway->update($data, ['id' => $id]);
+        }
+        return $object;
+    }
+
+    public function delete($object)
+    {
+        $id = (int) $object->id;
+        return $this->tableGateway->delete($data, ['id' => $id]);
+    }
+
+    public function fetchAll()
+    {
+        return $this->tableGateway->select();
+    }
+}

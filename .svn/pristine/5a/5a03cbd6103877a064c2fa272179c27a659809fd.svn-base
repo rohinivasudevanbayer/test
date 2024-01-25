@@ -1,0 +1,47 @@
+<?php
+namespace Application\View\Helper;
+
+use Laminas\View\Helper\AbstractHelper;
+
+class Modal extends AbstractHelper
+{
+
+    public function __construct()
+    {
+    }
+
+    /**
+     * Modal Setup
+     *
+     * @param string $name
+     * @param string $title
+     * @param string $content
+     * @param string $redirectUrl
+     * @param null $onClick
+     * @return Modal | String
+     */
+    public function render($name, $title, $content, $yesButtonLabel = "Yes", $noButtonLabel = "No", $redirectUrl = "", $onClick = null)
+    {
+        $onClickEvent = empty($onClick)
+        ? 'window.location.href = \'' . $redirectUrl . '\''
+        : $onClick;
+
+        return '<div class="modal fade" id="' . $name . '" tabindex="-1" role="dialog" aria-labelledby="' . $name . 'Modal">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="' . $name . 'Modal">' . $title . '</h4>
+                      </div>
+                      <div class="modal-body">
+                        ' . $content . '
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">' . $noButtonLabel . '</button>
+                        <button data-redirect-url="' . $redirectUrl . '" onClick="' . $onClickEvent . '" type="button" class="btn btn-primary">' . $yesButtonLabel . '</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>';
+    }
+}

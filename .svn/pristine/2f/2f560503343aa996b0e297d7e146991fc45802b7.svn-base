@@ -1,0 +1,22 @@
+<?php
+namespace Auth\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+
+class UserController extends AbstractActionController
+{
+    protected $usersTable;
+
+    public function __construct($usersTable)
+    {
+        $this->usersTable = $usersTable;
+    }
+
+    public function fullRegisterAction()
+    {
+    }
+
+    public function lostPasswordAction()
+    {
+    }
+}

@@ -1,0 +1,22 @@
+<?php
+$element = $form->get($rowName);
+
+$elementAttributes = $element->getAttributes();
+$elementAttributes['id'] = $rowName;
+$elementAttributes['class'] = (empty($elementAttributes['class']) ? '' : $elementAttributes['class'] . ' ') . 'form-control' . ($element->getMessages() ? ' input_error' : '');
+$element->setAttributes($elementAttributes);
+
+if (!empty($elementAttributes['required'])) {
+    $element->setLabel($element->getLabel() . ' *');
+}
+
+$labelAttributes = $element->getLabelAttributes();
+$labelAttributes['class'] = (empty($labelAttributes['class']) ? '' : $elementAttributes['class'] . ' ');
+$labelAttributes['for'] = $rowName;
+$element->setLabelAttributes($labelAttributes);
+?>
+<div class="form-group">
+    <?=$this->formLabel($element)?>
+    <?=$this->formElement($element)?>
+    <?=$this->formElementErrors($element)?>
+</div>

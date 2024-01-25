@@ -1,0 +1,283 @@
+<?php
+$this->headScript()->appendFile($this->basePath('js/jquery-ui/jquery-ui.min.js'));
+$this->headLink()->appendStylesheet($this->basePath('js/jquery-ui/jquery-ui.structure.min.css'))
+    ->appendStylesheet($this->basePath('js/jquery-ui/jquery-ui.theme.min.css'));
+
+$cookieName = 'selected-shorturls';
+$shorturlIds = isset($_COOKIE[$cookieName]) ? json_decode($_COOKIE[$cookieName]) : [];
+?>
+<?php if ($this->layout()->user->isSuperAdmin()): ?>
+<ul class="nav nav-tabs" role="tablist">
+    <li><a href="<?=$this->url("admin")?>" ><?=$this->translate('user roles')?></a></li>
+    <li class="active"><a href="#"><?=$this->translate('Change Owner')?></a></li>
+</ul>
+<?php endif;?>
+<div id="actions-bar">
+    <div id="actions-bar-container">
+        <div class="row mb-3">
+            <div class="col-md-12 text-right mt-3">
+                <?=$this->translate('Number of selected shorturls:')?><span class="selected-shorturls-count ml-3 mr-5">0</span>
+                <a href="#" id="selection-reset" class="btn btn-default btn-sm mr-5"><?=$this->translate('Reset')?></a>
+                <a href="#user-ids-modal" id="selection-open-modal" data-action="information" data-id="user-ids-modal" data-toggle="modal" class="btn btn-danger mt-3"><?=$this->translate('Change Owner')?></a>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="table-content" class="row">
+    <?php if (!empty($this->savedOwner)): ?>
+    <div class="col col-md-12 mt-2">
+        <div class="alert alert-success">
+            <?=$this->translate('Shorturl owner successfully saved')?>
+        </div>
+    </div>
+    <?php endif;?>
+    <div class="col col-md-12">
+        <?php if (null === $this->paginator || 0 === count($this->paginator)): ?>
+        <div class="alert alert-danger">
+            <p class="mb-5"><?=$this->translate('no data found')?></p>
+            <a class="btn btn-danger" href="<?=$this->url('admin', ['action' => 'changeowner'])?>"><?=$this->translate('Cancel')?></a>
+        </div>
+        <?php else: ?>
+        <table class="white-link table table-striped table-hover ">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="check-all" title="<?=$this->translate('check/uncheck all')?>" /></th>
+                <th>
+                    <?=$this->translate('Shorturl')?>
+                </th>
+                <th>
+                    <?=$this->translate('targeturl')?>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php
+function shortenText(string $text, int $maxLength = 50): string
+{
+    if (strlen($text) > $maxLength) {
+        return '<span title="' . $text . '">' . mb_substr($text, 0, $maxLength - 3) . '...</span>';
+    }
+    return $text;
+}
+?>
+            <?php foreach ($this->paginator as $shorturl): ?>
+                <tr <?=($this->newShortUrlExists == $shorturl->id || $this->luid == $shorturl->id) ? 'style="background:#DFF0D8"' : ''?>>
+                    <td>
+                    <input
+                        <?=in_array($shorturl->id, $shorturlIds) ? 'checked="checked"' : ''?>
+                        class="checkbox shorturl-checkbox"
+                        value="<?=$this->escapeHtmlAttr($shorturl->id)?>"
+                        name="urls"
+                        type="checkbox" />
+                    </td>
+                    <td><a href="https://<?=$this->escapeHtmlAttr($shorturl->short_url)?>" target="_blank"><?=$this->escapeHtml($shorturl->short_url)?></a></td>
+                    <td><?=shortenText($this->escapeHtml($shorturl->target_url, 70))?></td>
+                    <td class="actions text-right"><a
+                        title="<?=$shorturl->status == 1 ? $this->translate('active') : $this->translate('Information')?>"
+                        href="<?=$this->url('shorturl', ['action' => 'info', 'id' => $shorturl->id])?>"
+                        data-target="shorturl-info"
+                        data-toggle="ajaxModal">
+                            <span aria-hidden="true" class="glyphicon glyphicon-info-sign"></span>
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach;?>
+            </tbody>
+        </table>
+        <?=$this->paginationControl(
+    $this->paginator, // paginator object
+    'Elastic', // scrolling style
+    'partial/paginator', // partial
+    ['route' => 'admin', 'routeParams' => ['action' => 'changeowner'], 'routeQuery' => $this->paginatorQuery]// paginator partial variables
+)?>
+        <?php endif;?>
+    </div>
+</div>
+<style>
+    .ui-autocomplete {
+        z-index: 9999999
+    }
+</style>
+<?php
+$modalContent = '
+<p>' . $this->translate('Number of selected shorturls:') . ' <span class="selected-shorturls-count"></span></p>
+<form onsubmit="return false;" method="post" class="form-inline">
+    <div class="form-group">
+        <input name="new_owner_id" type="hidden" id="new_owner_id" />
+        <input
+            style="width: 500px"
+            autocomplete="off" class="form-control"
+            placeholder="Name"
+            type="text"
+            id="new_owner_name" /><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate ml-3" id="user-search-loading" style="display: none"></span>
+    </div>
+</form>';
+
+echo $this->modal()->render(
+    "user-ids-modal",
+    $this->translate("Please choose new user"),
+    $modalContent,
+    'Ok',
+    'Cancel'
+);
+?>
+
+<script type="text/javascript">
+$(function() {
+    var cookieName = '<?=$this->escapeJs($cookieName)?>';
+
+    function createCookie(name, value, days) {
+        var expires = "";
+        if (days <= 0) {
+            expires = "; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+        } else if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + value + expires + "; path=/";
+    }
+
+    function readCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1, c.length);
+            }
+            if (c.indexOf(nameEQ) == 0) {
+                return c.substring(nameEQ.length, c.length);
+            }
+        }
+        return null;
+    }
+
+    function eraseCookie(name) {
+        createCookie(name, "", -1);
+    }
+
+    function setUserUid(message) {
+        var userid = message.split("-");
+        var useruid = userid[0].trim();
+        $('#shared-user-name').val(useruid);
+    }
+
+    /**
+     * Extension of autocomplete widget to be able to use user id as value
+     */
+    $.widget('custom.userautocomplete', $.ui.autocomplete, {
+        _renderItem: function(ul, item) {
+            return $("<li>")
+                .attr("data-value", item.value)
+                .append(item.label)
+                .appendTo(ul);
+        }
+    });
+
+    $("#new_owner_name").userautocomplete({
+        source: function (request, response) {
+            $('#user-search-loading').show();
+            $.ajax({
+                url: <?=json_encode($this->url('shorturl', ['action' => 'findUsers']))?>,
+                dataType: "json",
+                data: {
+                    q: request.term
+                },
+                success: function (data) {
+                    $('#user-search-loading').hide();
+                    response(data.shares);
+                },
+                error: function (err) {
+                    $('#user-search-loading').hide();
+                }
+            });
+        },
+        minLength: 3,
+        delay: 500,
+        select: function (event, ui) {
+            $('#new_owner_name').val(ui.item.label);
+            $('#new_owner_id').val(ui.item.value);
+            return false;
+        }
+    });
+
+    $('.shorturl-checkbox').on('change', function(obj){
+        var shorturlId = obj.currentTarget.value;
+        var cookieString = readCookie(cookieName);
+        var savedIds = null === cookieString ? [] : JSON.parse(cookieString);
+        if (obj.currentTarget.checked && -1 === savedIds.indexOf(shorturlId)) {
+            savedIds.push(shorturlId);
+        } else if (!obj.currentTarget.checked && 0 <= savedIds.indexOf(shorturlId)) {
+            savedIds = savedIds.filter(function(val) {
+                return (val !== shorturlId);
+            });
+        }
+        cookieString = JSON.stringify(savedIds);
+        createCookie(cookieName, cookieString, 1);
+        updateCountOutput();
+    });
+
+    function updateCountOutput() {
+        var cookieString = readCookie(cookieName);
+        var savedIds = null === cookieString ? [] : JSON.parse(cookieString);
+        var amountSelected = savedIds.length;
+        $('#selection-reset').attr('disabled', amountSelected <= 0);
+        $('#selection-open-modal').attr('disabled', amountSelected <= 0);
+        $('.selected-shorturls-count').html(amountSelected);
+    }
+
+    $('#user-ids-modal .btn-modal-save').on('click', function () {
+        var userId = $('#new_owner_id').val() * 1;
+        if (userId == "") {
+            alert(<?=json_encode($this->translate('Please select a user'))?>);
+            return;
+        }
+        var cookieString = readCookie(cookieName);
+        var savedIds = null === cookieString ? [] : JSON.parse(cookieString);
+
+        if (!savedIds.length) {
+            alert(<?=json_encode($this->translate('Please select a ShortUrl'))?>);
+            return;
+        }
+
+        eraseCookie(cookieName);
+
+        var params = QueryString.get();
+        params['ids'] = savedIds.join(",");
+        params['uid'] = userId;
+        window.location.href = QueryString.create(params);
+    });
+
+    var $actionsBar = $("#actions-bar");
+    var stickyPos = $actionsBar.offset().top;
+    $(window).on('scroll', function() {
+        if ($(window).scrollTop()>= stickyPos) {
+            $actionsBar.addClass("sticky container");
+            $('#actions-bar-container').addClass("container");
+        } else {
+            $actionsBar.removeClass("sticky container");
+            $('#actions-bar-container').removeClass("container");
+        }
+    });
+
+    $('#check-all').on('change', function(chEv) {
+        $('.shorturl-checkbox').each(function() {
+            $(this).prop('checked', chEv.target.checked);
+            $(this).trigger('change');
+        })
+    });
+
+    $('#selection-reset').on('click', function() {
+        eraseCookie(cookieName);
+        $('.shorturl-checkbox').prop('checked', false);
+        updateCountOutput()
+    });
+
+    updateCountOutput();
+    $(window).trigger('scroll');
+
+});
+
+</script>

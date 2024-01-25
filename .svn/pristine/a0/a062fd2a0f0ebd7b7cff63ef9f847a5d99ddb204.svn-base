@@ -1,0 +1,541 @@
+<?php
+$this->headScript()->appendFile($this->basePath('js/jquery-ui/jquery-ui.min.js'));
+$this->headLink()->appendStylesheet($this->basePath('js/jquery-ui/jquery-ui.structure.min.css'))
+    ->appendStylesheet($this->basePath('js/jquery-ui/jquery-ui.theme.min.css'));
+
+if (empty($this->showErrorOnly)) {
+    $form->setAttributes(['class' => 'form']);
+
+    $form->get('target_url')
+        ->setAttributes([
+            'autofocus' => true,
+        ]);
+
+    $form->get('url_code')
+        ->setAttributes([
+            'disabled' => true,
+        ]);
+
+    $form->get('domains')
+        ->setAttributes([
+            'disabled' => true,
+        ]);
+
+    $form->get('cancel')
+        ->setAttributes([
+            'id' => 'shorturl-cancel',
+            'class' => 'btn btn-default',
+            'value' => ucfirst($this->translate('Cancel')),
+        ]);
+
+    $form->get('submit')
+        ->setAttributes([
+            'class' => 'btn btn-primary submit-ajax-btn',
+            'value' => ucfirst($this->translate('save')),
+        ]);
+
+    $formRowHelper = $this->formRow();
+    $formRowHelper->setInputErrorClass('error');
+    $elementHelper = $this->formElement();
+    $errorHelper = $this->formElementErrors();
+    $errorHelper->setTranslateMessages(true);
+    $errorHelper->setAttributes(['class' => 'errors']);
+
+    $form->prepare();
+}
+?>
+<h2><?=$this->translate('Edit Short url')?></h2>
+
+<div class="row">
+    <div class="col-lg-<?=empty($this->showErrorOnly) ? 8 : 12?>">
+        <div class="<?=empty($this->showErrorOnly) ? 'well' : ''?> bs-component">
+
+            <?php if (!empty($this->error)): ?>
+                <div class="alert alert-danger">
+                    <?=$this->error?>
+                </div>
+                <?php if (!empty($this->showErrorOnly)): ?>
+                <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams]);?>" class="btn btn-default btn-back">
+                    <span class="glyphicon glyphicon-chevron-left mr-3" aria-hidden="true"></span><?=$this->translate('back')?>
+                </a>
+                <?php endif;?>
+            <?php endif; // has error ?>
+
+            <?php if (empty($this->showErrorOnly)): ?>
+                <?php if (empty($this->error)): ?>
+                    <?php if ($this->isOwner === false): ?>
+                    <div class="alert alert-warning">
+                        <h4><?=$this->translate('Warning!')?></h4>
+                        <p><?=$this->translate('You are not owner this url')?></p>
+                    </div>
+                    <?php endif;?>
+                    <?php if ($this->isExpired): ?>
+                        <div class="alert alert-warning">
+                            <h4><span aria-hidden="true" class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;<?=$this->translate('Warning!')?></h4>
+                            <p><?=$this->translate('This ShortUrl expired already!')?></p>
+                        </div>
+                    <?php endif;?>
+                    <?php if ($this->willExpireSoon): ?>
+                        <div class="alert alert-warning">
+                            <h4><span aria-hidden="true" class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;<?=$this->translate('Warning!')?></h4>
+                            <p><?=$this->translate('This ShortUrl will expire soon!')?></p>
+                        </div>
+                    <?php endif;?>
+                    <?php if ($this->isInActive): ?>
+                        <div class="alert alert-warning">
+                            <h4><span aria-hidden="true" class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;<?=$this->translate('Warning!')?></h4>
+                            <p><?=$this->translate('This ShortUrl is deactivated!')?></p>
+                        </div>
+                    <?php endif;?>
+                <?php endif;?>
+
+                <?=$this->form()->openTag($form)?>
+
+                <?php foreach (['target_url', 'domains', 'url_code', 'expiry_date', 'status'] as $elementName): ?>
+                    <?=$this->partial('partial/form_input.phtml', ['form' => $form, 'rowName' => $elementName])?>
+                <?php endforeach;?>
+
+                <div class="form-actions">
+                    <?=$this->formElement($form->get('cancel'))?>
+                    <?=$this->formElement($form->get('submit'))?>
+                </div>
+
+                <?=$this->form()->closeTag()?>
+            <?php endif;?>
+
+        </div>
+        <?php if (empty($this->error)): ?>
+            <div class="actions well bs-component">
+            <?=$this->actionIcons($shorturl, ['info', 'edit', 'state'])?>
+            </div>
+        <?php endif;?>
+    </div>
+    <?php if (empty($this->showErrorOnly)): ?>
+        <div class="col-lg-4">
+            <h4><?=$this->translate('Your generated url')?></h4>
+
+            <div id="url-loading">
+                <span class="loading-text"><?=$this->translate("loading")?></span>
+                <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+            </div>
+
+            <div id="url-no-info"><?=$this->translate('No information')?></div>
+
+            <div class="generated-url spacer">
+                <div class="url-container" style="display: none;">
+                    <span class="label label-success"><?=$this->translate('URL exists')?></span>
+                    <span class="url"><span class="domain"></span>/<span class="urlcode"></span></span>
+                </div>
+            </div>
+
+            <div class="spacer" id="target-url" style="display: none">
+                <span class="label label-default"><?=$this->translate('Target Url')?></span>
+                <span class="target-url"></span>
+            </div>
+
+            <div class="spacer" id="owner-info" style="display: none">
+                <span class="label label-info"><?=$this->translate('Owner')?></span>
+                <span class="info"></span>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="divider"><br/></div>
+            <div class="generated-url">
+                <h4><?=$this->translate('Share this url')?></h4>
+                <div class="display-errors" style="display: none">
+                    <div class="alert alert-danger">
+                    </div>
+                </div>
+                <form onsubmit="return false;" method="post" class="form-inline">
+                    <div class="form-group">
+                        <input name="username" type="hidden" id="shared-user-id" />
+                        <input
+                            autocomplete="off" class="form-control"
+                            placeholder="<?=$this->translate('Enter username')?>"
+                            type="text"
+                            id="shared-user" />
+                        <button id="save-shared-user"
+                                class="btn btn-primary btn-md"><?=$this->translate('share with user')?> <span id="shared-user-loading" class="glyphicon glyphicon-refresh glyphicon-refresh-animate" style="display:none"></span></button>
+                    </div>
+                </form>
+
+                <div id="shared-user-list">
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><?=$this->translate('User Shares')?></h3>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td><a href="mailto:<?=$owner->email?>"><?=$this->escapeHtml($owner->name . ', ' . $owner->firstname)?></a></td>
+                                    <td><span><?=$this->translate('owner')?></span></td>
+                                </tr>
+                                </tbody>
+                                <tbody id="share-row-template" style="display: none">
+                                    <tr>
+                                        <td><a class="mail-link"></a></td>
+                                        <td>
+                                            <a class="unshared-url-btn"
+                                                data-urlid="<?=(int) $this->shorturl->id?>"
+                                                style="color: red;"
+                                                title="<?=$this->translate('remove share')?>"
+                                                href="#"
+                                            >
+                                                <span aria-hidden="true" class="glyphicon glyphicon-remove-circle"></span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tbody id="loading-shares" style="display:none">
+                                    <tr>
+                                        <td colspan="2">
+                                            <span class="loading-text"><?=$this->translate("loading")?></span>
+                                            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+                                        </td>
+                                </tbody>
+                                <tbody id="shares"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="divider"><br/></div>
+            <div class="generated-url">
+                <h4><?=$this->translate('Transfer this url')?></h4>
+                <div class="display-errors-transfered" style="display: none">
+                    <div class="alert alert-danger">
+                    </div>
+                </div>
+                <form onsubmit="return false;" method="post" class="form-inline">
+                    <div class="form-group">
+                        <input name="username" type="hidden" id="transfered-user-id"/>
+                        <input
+                            autocomplete="off" class="form-control"
+                            placeholder="<?=$this->translate('Enter username')?>"
+                            type="text"
+                            id="transfered-user" />
+                        <button id="save-transfered-user"
+                            class="btn btn-primary btn-md"><?=$this->translate('transfer to user')?> <span id="transfered-user-loading" class="glyphicon glyphicon-refresh glyphicon-refresh-animate" style="display:none"></span></button>
+                        </row>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    <?php endif;?>
+</div>
+<script type="text/javascript">
+    //===============================================================================================================
+    // Domain Check
+    //===============================================================================================================
+    var loadingCounter = 0;
+    function refreshDomainCheck() {
+        var domains = {};
+        <?php foreach ($this->domains as $domain): ?>domains[<?=$domain->id?>] = '<?=$domain->domain?>';<?php endforeach;?>
+        var domainId = $('#domains').val();
+        var domain = domains[domainId];
+        var $urlContainer = $('.url-container');
+        var $loadingContainer = $('#url-loading');
+        var $ownerInfoContainer = $('#owner-info');
+        var $targetUrlContainer = $('#target-url');
+        var $noInfoContainer = $('#url-no-info');
+        var $shortUrlInput = $('#url_code');
+        var $submitBtn = $('#Submit');
+        var urlcode = $shortUrlInput.val();
+
+        $urlContainer.hide();
+        $ownerInfoContainer.hide();
+        $targetUrlContainer.hide();
+
+        if ('' === urlcode) {
+            $noInfoContainer.show();
+        } else {
+            $noInfoContainer.hide();
+            $loadingContainer.show();
+            loadingCounter++;
+            var encodedUrlcode = encodeURIComponent(decodeURIComponent(urlcode));
+
+            $.get('<?=$this->url('shorturl', ['action' => 'exists'])?>', {urlcode: encodedUrlcode, domain: domainId}, function (data) {
+                loadingCounter--;
+                if (0 !== loadingCounter) {
+                    return; // only show last result
+                }
+                $loadingContainer.hide();
+                if (urlcode != '') {
+                    $urlContainer.show();
+                }
+                if (data.message != false) {
+                    $shortUrlInput.addClass("ajax_input_error");
+                    $urlContainer.find('.label').removeClass('label-success');
+                    $urlContainer.find('.label').addClass('label-danger');
+                    $submitBtn.attr("disabled", "0");
+                    $urlContainer.find('.label').html('<?=$this->translate('URL exists')?>');
+                    $urlContainer.find('.domain').html(domain);
+                    $urlContainer.find('.urlcode').html(encodedUrlcode);
+                    $targetUrlContainer.find('.target-url').html('<a target="_blank" href="' + data.message.target_url + '">' + data.message.target_url + '</a>');
+                    $targetUrlContainer.show();
+                    $ownerInfoContainer.show();
+
+                    var ownerHtml = data.message.owner.firstname + ' ' + data.message.owner.name;
+                    if ('' !== data.message.owner.email) {
+                        ownerHtml = '<a title="' + data.message.owner.email + '" href="mailto:' + data.message.owner.email + '">' + ownerHtml + '</a>';
+                    }
+                    $ownerInfoContainer.find('.info').html(ownerHtml);
+                } else {
+                    $shortUrlInput.removeClass("ajax_input_error");
+                    $urlContainer.find('.label').removeClass('label-danger');
+                    $urlContainer.find('.label').addClass('label-success');
+                    $urlContainer.find('.label').html('<?=$this->translate('URL is enable')?>');
+                    $urlContainer.find('.domain').html(domain);
+                    $urlContainer.find('.urlcode').html(encodedUrlcode);
+                    $targetUrlContainer.hide();
+                    $ownerInfoContainer.hide();
+                    $ownerInfoContainer.find('.info').html(" ");
+                    $submitBtn.removeAttr("disabled");
+                }
+            }).fail(function() {
+                loadingCounter--;
+            });
+        }
+    };
+
+    function delay(callback, ms) {
+        var timer = 0;
+        return function() {
+            var context = this;
+            var args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                callback.apply(context, args);
+            }, ms || 0);
+        };
+    }
+
+    /**
+     * Extension of autocomplete widget to be able to use user id as value
+     */
+    $.widget('custom.userautocomplete', $.ui.autocomplete, {
+        _renderItem: function(ul, item) {
+            return $("<li>")
+                .attr("data-value", item.value)
+                .append(item.label)
+                .appendTo(ul);
+        }
+    });
+
+    /**
+     * Autocomplete for adding user shares
+     */
+    $("#shared-user").userautocomplete({
+        source: function (request, response) {
+            $('#shared-user-loading').show();
+            $.ajax({
+                url: <?=json_encode($this->url('shorturl', ['action' => 'findUsers']))?>,
+                dataType: "json",
+                data: {
+                    q: request.term
+                },
+                success: function (data) {
+                    response(data.shares);
+                    $('#shared-user-loading').hide();
+                },
+                error: function (err) {
+                    $('#shared-user-loading').hide();
+                }
+            });
+        },
+        minLength: 3,
+        delay: 500,
+        select: function (event, ui) {
+            $('#shared-user').val(ui.item.label);
+            $('#shared-user-id').val(ui.item.value);
+            return false;
+        },
+        open: function () {
+            $(this).removeClass("ui-corner-all").addClass("ui-corner-top");
+        },
+        close: function () {
+            $(this).removeClass("ui-corner-top").addClass("ui-corner-all");
+        }
+    });
+
+    /**
+     *   Save shared url
+     */
+    $('#save-shared-user').on('click', function () {
+        var userUid = $('#shared-user-id').val();
+        var shortUrlId = <?=json_encode($this->shorturl->id)?>;
+        var $obj = $('#shared-user');
+        var $errorBox = $('.display-errors');
+        $.ajax({
+            url: <?=json_encode($this->url('shorturl', ['action' => 'addShare']))?>,
+            dataType: "json",
+            method: 'post',
+            data: {
+                user_id: userUid,
+                url_id: shortUrlId
+            },
+            success: function (data) {
+                $('#shared-user-id').val("");
+                $('#shared-user').val("");
+                $obj.removeClass('has-error');
+                $errorBox.hide();
+                updateShareList();
+            },
+            error: function (err) {
+                $errorBox.show();
+                $obj.addClass('has-error');
+                $('#shared-user-id').val("");
+                $('#shared-user').val("");
+                if (err.status == '404') {
+                    $errorBox.find('.alert').html('<strong>Error 404 : </strong>' + <?=json_encode($this->translate('ajax url don\'t exists'))?>);
+                } else {
+                    $errorBox.find('.alert').html(err.statusText);
+                }
+            }
+        });
+    });
+
+    /**
+     * Transfer url to new owner
+     */
+    $('#save-transfered-user').on('click', function () {
+        var userId = $('#transfered-user-id').val();
+        var shorturlId = <?=json_encode($this->shorturl->id)?>;
+        var $inputField = $('#transfered-user');
+        var $errorBox = $('.display-errors-transfered');
+        $.ajax({
+            url: <?=json_encode($this->url('shorturl', ['action' => 'changeOwner']))?>,
+            dataType: "json",
+            method: 'post',
+            data: {
+                user_id: userId,
+                url_id: shorturlId
+            },
+            success: function (data) {
+                window.location.href = <?=json_encode($this->url('shorturl', ['action' => 'index']))?>
+            },
+            error: function (err) {
+                $errorBox.show();
+                $inputField.addClass('has-error');
+                $('#transfered-user-name').val("");
+                $('#transfered-user').val("");
+                if (err.status == '404') {
+                    $errorBox.find('.alert').html('<strong>Error 404 : </strong>' + <?=json_encode($this->translate('ajax url don\'t exists'))?>);
+                } else {
+                    $errorBox.find('.alert').html(err.statusText);
+                }
+            }
+        });
+    });
+
+    /**
+     * Autocomplete for transfering ownership
+     */
+    $("#transfered-user").userautocomplete({
+        source: function (request, response) {
+            $('#transfered-user-loading').show();
+            $.ajax({
+                url: <?=json_encode($this->url('shorturl', ['action' => 'findUsers']))?>,
+                dataType: "json",
+                data: {
+                    q: request.term
+                },
+                success: function (data) {
+                    $('#transfered-user-loading').hide();
+                    response(data.shares);
+                },
+                error: function (err) {
+                    $('#transfered-user-loading').hide();
+                }
+            });
+        },
+        minLength: 3,
+        delay: 500,
+        select: function (event, ui) {
+            $('#transfered-user').val(ui.item.label);
+            $('#transfered-user-id').val(ui.item.value);
+            return false;
+        },
+        open: function () {
+            $(this).removeClass("ui-corner-all").addClass("ui-corner-top");
+        },
+        close: function () {
+            $(this).removeClass("ui-corner-top").addClass("ui-corner-all");
+        }
+    });
+
+    /**
+     * Update the list of shared users
+     */
+    function updateShareList() {
+        var $loading = $('#loading-shares');
+        var $table = $('#shares');
+        $table.empty();
+        $loading.show();
+        $.get("<?=$this->url('shorturl', ['action' => 'getSharedUserList'], ['query' => ['url_id' => $this->shorturl->id]])?>", function(res) {
+            if (res.success && res.shares) {
+                $loading.hide();
+                for (resultNr in res.shares) {
+                    var user = res.shares[resultNr];
+                    var $newRow = $('#share-row-template tr').clone();
+                    var $mailLink = $newRow.find('.mail-link');
+                    $mailLink.attr('href', 'mailto:' + user.email);
+                    $mailLink.text(user.name + ', ' + user.firstname);
+                    var $unshareBtn = $newRow.find('.unshared-url-btn');
+                    $unshareBtn.data('userid', user.id);
+                    $unshareBtn.data('self', user.self ? 1 : 0);
+                    $table.append($newRow);
+                }
+            }
+        });
+    }
+
+    /**
+     * Unshare buttons action
+     */
+    $('#shares').on('click', '.unshared-url-btn', function (e) {
+        e.preventDefault();
+        var $objs = $(this);
+        var self = $objs.data('self');
+        var confirmed;
+        if (self === 1) {
+            confirmed = confirm(<?=json_encode($this->translate('confirm unshare by self'))?>);
+        } else {
+            confirmed = confirm(<?=json_encode($this->translate('confirm unshared'))?>);
+        }
+        if (confirmed) {
+            var userId = $objs.data('userid');
+            var urlId = $objs.data('urlid');
+            $.get(<?=json_encode($this->url('shorturl', ['action' => 'removeShare']))?> + '?user_id=' + userId + '&url_id='+ urlId,
+                function(data) {
+                    if (data.message == 1) {
+                        updateShareList();
+                    }
+            });
+        }
+    });
+
+    /**
+     * Initialize datepicker widget
+     */
+    $('#expiry_date').datepicker({
+        autoclose: true,
+        toggleActive: true,
+        format: "yyyy-mm-dd",
+        language: "<?=$this->escapeJs($this->layout()->currentLanguage)?>"
+    });
+
+    $('#shorturl-cancel').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = '<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>';
+    });
+
+    updateShareList();
+    refreshDomainCheck();
+
+</script>

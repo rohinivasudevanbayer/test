@@ -1,0 +1,354 @@
+<?php
+return array(
+    'actions' => 'Actions',
+    'Actions' => 'Actions: ',
+    'active' => 'Active',
+    'Active' => 'Active',
+    'ajax url don\'t exists' => 'Ajax URL does not exist',
+    'All' => 'All',
+    'An unknown error occurred when sending an email.' => 'An unknown error occurred when sending an email. ',
+    'back' => 'Back',
+    'Cancel' => 'Cancel',
+    'change status' => 'change status',
+    'Conditions of use' => 'Conditions of Use',
+    'Conditions of Use' => 'Conditions of Use',
+    'confirm unshare by self' => 'You lock out yourself if you remove this item!',
+    'confirm unshared' => 'Do you really want to remove the share?',
+    'Contact' => 'Contact',
+    'content-conditional-of-use' => ':include_root=shared/en/conditions-of-use.php',
+    'Continue' => 'Continue',
+    'create new shorturl' => 'Add ShortURL',
+    'Create Short url' => 'Create ShortURL',
+    'created at' => 'Created at',
+    'created by' => 'Created by',
+    'cwid' => 'CWID',
+    'Date' => 'Date',
+    'Delete Short url' => 'Delete ShortURL',
+    'Delete' => 'Delete',
+    'Do you really want to restore this version?' => 'Do you really want to restore this revision?',
+    'Domain' => 'Domain',
+    'download as CSV' => 'Download as CSV',
+    'Download as CSV' => 'Download as CSV',
+    'download' => 'Download',
+    'E-Mail' => 'E-Mail',
+    'Edit Short url' => 'Edit ShortURL',
+    'Edit' => 'Edit',
+    'edit' => 'edit',
+    'Empty Parameter' => '<strong>Error: </strong> empty parameter',
+    'Enter username' => 'Enter username',
+    'Error 404, page not found' => 'Error 404, page not found',
+    'Filter' => 'Filter: ',
+    'firstname' => 'Firstname',
+    'Firstname' => 'Firstname',
+    'generate QR-Code for' => 'Generate QR code for: ',
+    'header-headline' => 'Bayer ShortURL Service',
+    'Help' => 'Help',
+    'help_description_field_domains' => 'The domain name which is used for the ShortURL.',
+    'help_description_field_short_url' => 'The token which will be used in the ShortURL. This can either be generated automatically or chosen freely.',
+    'help_description_field_status' => 'Status of the ShortURL. If set to inactive the ShortURL will not redirect anymore.',
+    'help_description_field_target_url' => 'The real URL the user will be redirected to.',
+    'Home' => 'Home',
+    'documentation-page' => ':include=config/languages/en/documentation.php',
+    'Imprint' => 'Imprint',
+    'imprint-page' => ':include_root=shared/en/imprint.php',
+    'inactive' => 'Inactive',
+    'Inactive' => 'Inactive',
+    'Information' => 'Information',
+    'Language' => 'Language: ',
+    'Last updated: %s' => 'Last updated: %s',
+    'link dimensions' => 'link dimensions',
+    'live' => 'Live',
+    'Login' => 'Login',
+    'Logout' => 'Logout',
+    'Lost Password?' => 'Lost Password?',
+    'Manage my ShortUrls' => 'Manage my ShortUrls',
+    'manage users' => 'manage users',
+    'match' => 'match',
+    'matches' => 'matches',
+    'Message' => 'Message',
+    'my data' => 'My Data',
+    'my populate shorturls' => 'My Top ShortURLs',
+    'My Profile' => 'My Profile',
+    'my shorturl list' => 'My ShortURL list',
+    'my shorturls' => 'My ShortURLs',
+    'my statistic' => 'My Statistic',
+    'Name' => 'Name',
+    'name' => 'Name',
+    'no access' => 'You don\'t have permission to access this area',
+    'no data found' => 'No data found.',
+    'No information' => 'No information',
+    'no permissions' => 'No permissions',
+    'No' => 'Cancel',
+    'number of inactive URLs' => 'Number of inactive URLs',
+    'number of shared URLs' => 'Number of shared URLs',
+    'number of URLs' => 'Number of URLs',
+    'OK' => 'OK',
+    'on Top' => 'Top',
+    'Only my Urls' => 'Only my own URLs',
+    'Only Shared Urls' => 'Only shared URLs',
+    'other users' => 'Other users',
+    'Owner' => 'Owner',
+    'owner' => 'owner',
+    'Password' => 'Password',
+    'Period:' => 'Period:',
+    'Privacy Statement' => 'Privacy Statement',
+    'privacy-page' => ':include_root=shared/en/privacy-statement.php',
+    'QR-Code is also changed.' => 'QR-Code is also changed.',
+    'QR-Code' => 'QR code',
+    'Register' => 'Register',
+    'register:info_text_for_bayer_user' => 'Hello, this is your first visit of the ShortURL tool. Please register by filling out the following form.',
+    'remove share' => 'Remove share',
+    'Repeat Password' => 'Repeat Password',
+    'Report a problem' => 'Report a problem',
+    'Revert Revision' => 'Revert Revision',
+    'Revert' => 'Revert',
+    'Revision' => 'Revision',
+    'Revisions for' => 'Revisions for:',
+    'Revisions' => 'Revisions',
+    'save settings' => 'Save Settings',
+    'save' => 'Save',
+    'saved' => 'Saved',
+    'Search Result:' => 'Search Result:',
+    'Search' => 'Search',
+    'Share this url' => 'Share this URL',
+    'share with user' => 'Share',
+    'shared' => 'shared by user \'%s\'',
+    'short url status will change to active' => 'Change the status of the ShortURL to active?',
+    'short url status will change to inactive' => 'Change the status of the ShortURL to inactive?',
+    'short url status will changed' => 'The status of the ShortURL will be changed',
+    'Short Url successfully created' => 'ShortURL successfully created',
+    'Short Url successfully updated' => 'ShortURL successfully updated',
+    'Short-URL contain not valid character' => "ShortURL contains invalid character(s)",
+    'ShortUrl ID not exists' => 'ShortURL does not exist',
+    'Shorturl Infomation' => 'ShortURL Information',
+    'Shorturl' => 'ShortURL',
+    'Show' => 'Show',
+    'slogan' => 'Bayer ShortURL',
+    'Statistic for:' => 'Statistic for:',
+    'Statistic' => 'Statistic',
+    'Statistics per day' => 'Statistics per day',
+    'Statistics per month' => 'Statistics per month',
+    'Statistics per week' => 'Statistics per week',
+    'Status' => 'Status',
+    'Subject' => 'Subject',
+    'Submit' => 'Submit',
+    'Submit-Contact' => 'Send',
+    'Submit-Login' => 'Login',
+    'Submit-Register' => 'Register',
+    'Target Url' => 'TargetURL',
+    'targeturl' => 'TargetURL',
+    'Thanks! Your email has been sent.' => 'Thanks! Your email has been sent.',
+    'The following ShortURL will be deleted:' => 'The following ShortURL will be permanently deleted and will not be reachable anymore:',
+    'The two given tokens do not match' => 'The two given tokens do not match',
+    'There has been an error.' => 'There have been errors',
+    'There has been an unknown error.' => 'There has been an unknown error.',
+    'There is no data available' => 'There is no data available',
+    'This Short Url already exists' => 'This ShortURL already exists',
+    'this user already exists' => 'This user already exists',
+    'title for status modal' => 'Change status',
+    'to' => 'to',
+    'uid' => 'CWID',
+    'unknown error' => 'Unknown error',
+    'unshared' => 'unshared',
+    'update my data' => 'Update my data',
+    'Update Profile' => 'Update profile',
+    'updated at' => 'Updated at',
+    'updated by' => 'Updated by',
+    'url already shared' => 'URL already shared',
+    'URL exists' => 'URL exists',
+    'URL is enable' => 'URL is enabled',
+    'URL is not valid' => "URL is not valid",
+    'user' => 'User',
+    'User ID not exists' => 'User does not exist',
+    'user not using shorturl' => 'No ShortUrl user found with this name.',
+    'User Shares' => 'Shared with:',
+    'user successfully created' => 'User successfully created',
+    'Username' => 'Username',
+    'visits count' => 'Visits',
+    'visits' => 'Visits',
+    'Warning!' => 'Warning!',
+    'Yes' => 'Ok',
+    'You are logged as' => 'Logged in as: ',
+    'You are not owner this url' => 'You are not the owner of this URL',
+    'You don\'t have permission' => 'You don\'t have permission',
+    'Your Generated QR-Code' => 'Your generated QR code',
+    'Your generated url' => 'Your generated URL',
+    'Your Name' => 'Your Name',
+    'Your Profile successfully updated' => 'Your Profile has been successfully updated',
+    'Short-URL and Target-URL can not be identical' => 'ERROR: Short-URL and Target-URL are not allowed to be equal',
+    'Expiry Date' => 'Expiry Date',
+    'Folgende URL werden bald ablaufen' => 'The following URLs will expire soon or expired already:',
+    'From today +' => 'From today +',
+    'Caution: It will soon be %s your URLs' => 'Caution: %s of your URLs will expire soon',
+    'Caution: %s of your URLs already expired' => 'Caution: %s of your URLs already expired',
+    'Administrator' => 'Admin',
+    'Error 401, Unauthorized' => 'Error 401, Unauthorized',
+    'Role' => 'Role',
+    'Domain count' => 'Domain count',
+    'title for blacklist deleting modal' => 'Deleting URL-Code from Blacklist',
+    'URL Code will removed from blacklist' => 'URL Code will be removed from blacklist',
+    'Url is in Blacklist' => 'URL is in Blacklist',
+    'Notification-Mail-Subject' => 'ShortUrl Expiration Notification',
+    'Notification-Mail-Message' => "Dear %s, <br />
+        <p>%s of your short urls will expire soon:</p>
+           %s
+        <p>Please click the following link to extend the expiration: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Reminder1-Owner-Mail-Subject' => 'Your ShortUrl will expire soon',
+    'Reminder1-Owner-Mail-Message' => "Dear %1\$s, <br />
+        <p>the following of your ShortUrls will expire in %2\$s week's time:</p>
+           %3\$s
+        <p>Please click the following link to extend the expiration: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Reminder1-Shared-Mail-Subject' => 'Shared ShortUrl will expire soon',
+    'Reminder1-Shared-Mail-Message' => "Dear %1\$s, <br />
+        <p>the following shared ShortUrls will expire in %2\$s week's time:</p>
+           %3\$s
+        <p>Please click the following link to extend the expiration: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Reminder2-Owner-Mail-Subject' => 'Shared ShortUrl will expire soon',
+    'Reminder2-Owner-Mail-Message' => "Dear %1\$s, <br />
+        <p>the following of your ShortUrls will expire in %2\$s week's time:</p>
+           %3\$s
+        <p>Please click the following link to extend the expiration: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Reminder2-Shared-Mail-Subject' => 'Shared ShortUrl will expire soon',
+    'Reminder2-Shared-Mail-Message' => "Dear %1\$s, <br />
+        <p>the following shared ShortUrls will expire in %2\$s week's time:</p>
+           %3\$s
+        <p>Please click the following link to extend the expiration time: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Expiration-Notification-Owner-Mail-Subject' => 'ShortUrl expired',
+    'Expiration-Notification-Owner-Mail-Message' => "Dear %1\$s, <br />
+        <p>the following of your ShortUrls expired recently:</p>
+           %3\$s
+        <p>Please click the following link to extend the expiration time: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Expiration-Notification-Shared-Mail-Subject' => 'Shared ShortUrl expired',
+    'Expiration-Notification-Shared-Mail-Message' => "Dear %1\$s, <br />
+        <p>the following shared ShortUrls expired recently:</p>
+           %3\$s
+        <p>Please click the following link to extend the expiration time: <br />
+            <a href='http://go.bayer.com'>http://go.bayer.com</a>
+        </p>
+    ",
+    'Notification-MailMessage-ShortUrl-Not-Found' => "
+         Dear Admin, <br />
+        <p>the following link was not found: <br />
+          %s
+        </p>
+    ",
+    'Notification-MailSubject-ShortUrl-Not-Found' => 'ShortUrl Not Found Notification',
+    'Documentation' => 'Documentation',
+    'help_description_field_expiry_date' => 'Expiration date of the ShortUrl, once expired the ShortUrl will not be reachable anymore.',
+    'user_search_text' => 'You can search for values in the following fields: <b>CWID</b>, <b>mail</b>, <b>first name</b> OR <b>last name</b>. Multiple fields (first + last name) cannot be combined. The search term can also only be part of the final value, i.e. "Joh" will also find the entry "John Doe".',
+    'Select 1 Month' => '1 Month',
+    'Select 3 Month' => '3 Month',
+    'Select 6 Month' => '6 Month',
+    'Select 1 Year' => '1 Year',
+    'Select 2 Year' => '2 Years',
+    'Extend all expired' => 'Extend all',
+    'Choose a period' => 'Choose a period',
+    'Transfer this url' => 'Transfer this url',
+    'transfer to user' => 'transfer to user',
+
+    'cwid_not_valid' => 'CWID consists of 3-6 letters and numbers',
+    'cwid_exists' => 'An account with this CWID already exists',
+    'password' => 'Password',
+    'passwords_not_identical' => 'Passwords must be identical',
+    'passwordStrengthLength' => 'Password must be at least 8 characters in length',
+    'passwordStrengthUpper' => 'Password must contain at least one uppercase letter',
+    'passwordStrengthLower' => 'Password must contain at least one lowercase letter',
+    'passwordStrengthDigit' => 'Password must contain at least one digit character',
+    'fullregister:info_text_for_bayer_user' => 'Please register by filling out the following form.',
+    'fullregister:sent-mail-message' => 'Thanks! An activation mail has been sent to your email address. Please click on the link in this mail within 24 hours to activate your account.',
+    'no_bayer_email_address' => 'E-Mail must be a valid Bayer e-mail address',
+    'email_address_exists' => 'An account with this e-mail address already exists',
+    'isEmpty' => 'Value is required and can\'t be empty',
+    'account-activation:mail-subject' => 'ShortUrl Account Activation',
+    'account-activation:mail-text' => '
+        <p>Dear %1$s,</p>
+        <p>to use the Bayer ShortUrl Service, your account has to be activated first. To do so, please click the following link:</p>
+        <p>&nbsp;</p>
+        <p><a href="%2$s">Activate account</a></p>
+        <p>&nbsp;</p>
+        <p>or open the following URL in your browser:</p>
+        <p>&nbsp;</p>
+        <p>%2$s</p>
+        <p>&nbsp;</p>
+        <p>This link is valid for 24 hours. After that time you have to request a new mail to activate your account <a href="%3$s">here</a>.</p>
+        <p>&nbsp;</p>
+        <p>Thanks!</p>
+        <p>Your Bayer ShortUrl Team</p>
+    ',
+    'account-activation:error:token-invalid' => 'The registration mail you received is too old. Please request a new one <a href="%1$s">here</a>.',
+    'account-activation:error:no-token' => 'No token received',
+    'account-activation:breadcrumb-label' => 'Account Activation',
+    'account-activation:headline' => 'Account Activation',
+    'account-activation:success-message' => 'Your account has been activated!',
+    'request-activation:breadcrumb-label' => 'Account Activation',
+    'request-activation:headline' => 'Activate Account',
+    'request-activation:info-text' => 'Your account is not active yet. To activate the account, please click on the link in the email you received after registration. If you did not receive a mail yet or your activation does not work, you can request a new mail here.',
+    'request-activation:request-button-label' => 'Send Email Again',
+    'send-activation-mail:breadcrumb-label' => 'Account Activation',
+    'send-activation-mail:headline' => 'Account Activation',
+    'send-activation-mail:account-already-active' => 'Your account is already active.',
+    'send-activation-mail:success-message' => 'Thanks! An activation mail has been sent to your email address. Please click on the link in this mail within 24 hours to activate your account.',
+    'lost-password:browsers-info' => 'Use either Internet Explorer or Firefox. Google Chrome and Edge browser is not supported.',
+    'lost-password:breadcrumb-label' => 'Lost Password',
+    'lost-password:headline' => 'Lost Password',
+    'lost-password:submit-label' => 'Request email to change password',
+    'lost-password:mail-subject' => 'ShortUrl Password',
+    'lost-password:mail-text' => '
+        <p>Dear %1$s,</p>
+        <p>please use the following link to change your ShortUrl password:</p>
+        <p>&nbsp;</p>
+        <p><a href="%2$s">Change password</a></p>
+        <p>&nbsp;</p>
+        <p>or open the following URL in your browser:</p>
+        <p>&nbsp;</p>
+        <p>%2$s</p>
+        <p>&nbsp;</p>
+        <p>This link is valid for one hour. After that time you have to request a new mail to change your password <a href="%3$s">here</a>.</p>
+        <p>&nbsp;</p>
+        <p>Thanks!</p>
+        <p>Your Bayer ShortUrl Team</p>
+    ',
+    'lost-password:sent-mail-message' => 'Thanks! A mail has been sent to your email address. Please click on the link in this mail within one hour to change your password.',
+    'change-password:breadcrumb-label' => 'Change Password',
+    'change-password:headline' => 'Change Password',
+    'change-password:error:no-token' => 'No token received',
+    'change-password:error:token-invalid' => 'The change password mail you received is too old. Please request a new one <a href="%1$s">here</a>.',
+    'new-password' => 'New password',
+    'new-password-confirm' => 'Confirm new password',
+    'new-password-submit' => 'Change password',
+    'this user does not exist' => 'This user does not exist. Please register <a href="%1$s">here</a>.',
+    'change-password-success-message' => 'Your password has been changed. Please login <a href="%1$s">here</a>.',
+    'credentials-not-valid' => 'Invalid credentials!',
+    'profile:change-password:button-label' => 'Change Password',
+    'current-password' => 'Current Password',
+    'profile:change-password-success-message' => 'Your password has been changed.',
+    'profile:change-password-error-message' => 'Your password could not be changed.',
+    'try-again' => 'Try Again',
+    'none' => 'none',
+    'URL is available' => 'URL is available',
+    'This ShortUrl expired already!' => 'This ShortUrl expired already!',
+    'This ShortUrl will expire soon!' => 'This ShortUrl will expire soon!',
+    'This ShortUrl is deactivated!' => 'This ShortUrl is deactivated!',
+    'This ShortUrl does not exist.' => 'This ShortUrl \'%s\' does not exist.',
+    'expired' => 'Expired (%s)',
+    'will expire soon' => 'Will expire soon (%s)',
+    'Monsanto legacy disclainmer' => 'Using go.cnb/&lt;shorturl&gt; will allow access via mobile or for legacy Monsanto users',
+);

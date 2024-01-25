@@ -1,0 +1,35 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application\Controller;
+
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+
+class UserController extends AbstractActionController
+{
+    protected $config;
+
+    public function __construct($config)
+    {
+        $this->config = $config;
+    }
+
+    public function profileAction()
+    {
+        // $this->userModel = Model_User::getInstanceLdapUid();
+        // $modelShortUrl = new Model_Shorturl();
+
+        // $this->allShortUrls = $modelShortUrl->countShortUrls();
+        // $this->sharedUrls = $modelShortUrl->countShortUrls('su_url2user.shared = 1');
+        // $this->inactiveUrls  = $modelShortUrl->countShortUrls('status = 0');
+        // $this->myPoulateUrls = $modelShortUrl->getAllShortUrls(null, 'su_shorturl.visits desc', 5);
+
+        return new ViewModel([
+            'allShortUrls' => 0,
+            'sharedUrls' => 0,
+            'inactiveUrls' => 0,
+            'myPopularUrls' => [],
+        ]);
+    }
+}

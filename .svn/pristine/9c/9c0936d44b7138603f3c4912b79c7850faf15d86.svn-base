@@ -1,0 +1,94 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\Authentication\AuthenticationService;
+use Laminas\View\Model\ViewModel;
+use Shorturl\Controller\AbstractActionController;
+use Shorturl\Model\DomainsTable;
+use Shorturl\Model\ShorturlsTable;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+    private $authService;
+
+    private $filters = [ShorturlsTable::FILTER_ALL => 'All', ShorturlsTable::FILTER_MY => 'Only my Urls', ShorturlsTable::FILTER_SHARED => 'Only Shared Urls'];
+
+    public function __construct(ShorturlsTable $shorturlTable, DomainsTable $domainsTable, AuthenticationService $authService)
+    {
+        $this->shorturlTable = $shorturlTable;
+        $this->domainsTable = $domainsTable;
+        $this->authService = $authService;
+        $this->user = $this->authService->getIdentity();
+    }
+
+    public function indexAction()
+    {
+        $this->layout()->showSearch = true;
+
+        $queryParams = $this->getRequest()->getQuery();
+        $queryParams['order'] = $queryParams['order'] === "desc" ? "asc" : "desc";
+        if (empty($queryParams['filter']) || !array_key_exists($queryParams['filter'], $this->filters)) {
+            $queryParams['filter'] = ShorturlsTable::FILTER_MY;
+        };
+        if (empty($queryParams['domain'])) {
+            $queryParams['domain'] = ShorturlsTable::DOMAIN_ALL;
+        };
+        if (empty($queryParams['offset'])) {
+            $queryParams['offset'] = 0;
+        };
+
+        $domainId = 0;
+        if (!empty($queryParams['domain'])) {
+            $domainId = $this->domainsTable->getByDomain($queryParams['domain']);
+        }
+
+        $shorturlsSets = [];
+        switch ($queryParams['filter']) {
+            case ShorturlsTable::FILTER_ALL:
+                if ($this->user->superadmin == 1) {
+                    $shorturlsSets[] = $this->shorturlTable->getAllShortUrls($domainId, $queryParams['offset']);
+                } else {
+                    $shorturlsSets[] = $this->shorturlTable->getMyShortUrls($this->user->id, $domainId, $queryParams['offset']);
+                    $shorturlsSets[] = $this->shorturlTable->getSharedShortUrls($this->user->id, $domainId, $queryParams['offset']);
+                }
+                break;
+            case ShorturlsTable::FILTER_SHARED:
+                if ($this->user->superadmin == 1) {
+                    $shorturlsSets[] = $this->shorturlTable->getAllShortUrls($domainId, $queryParams['offset']);
+                } else {
+                    $shorturlsSets[] = $this->shorturlTable->getSharedShortUrls($this->user->id, $domainId, $queryParams['offset']);
+                }
+                break;
+            default:
+                $shorturlsSets[] = $this->shorturlTable->getMyShortUrls($this->user->id, $domainId, $queryParams['offset']);
+                break;
+        }
+        $shorturls = [];
+        foreach ($shorturlsSets as $set) {
+            foreach ($set as $row) {
+                $row->showFurtherActions = false;
+                if ($this->user->superadmin == 1) {
+                    $row->showFurtherActions = true;
+                } else if ($this->user->admin == 1) {
+                    // TODO: Check user domains
+
+                } else if ($this->user->id == $row->user_id) {
+                    $row->showFurtherActions = true;
+                }
+                // TODO: Check for shared urls
+                $shorturls[] = $row;
+            }
+        }
+
+        return new ViewModel([
+            'shorturls' => $shorturls,
+            'queryParams' => $queryParams,
+            'domainParam' => $queryParams['domain'],
+            'filterParam' => $queryParams['filter'],
+            'domains' => $this->domainsTable->fetchAll(),
+            'filters' => $this->filters,
+        ]);
+    }
+}

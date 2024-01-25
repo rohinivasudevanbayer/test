@@ -1,0 +1,94 @@
+<?php
+namespace Shorturl\Controller;
+
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+use Shorturl\Model\Admins2DomainsTable;
+use Shorturl\Model\DomainsProvider;
+use Shorturl\Model\Shorturls2UsersTable;
+use Shorturl\Model\ShorturlsTable;
+
+class ShorturlController extends AbstractActionController
+{
+    private $table;
+
+    private $authService;
+
+    private $filters = [ShorturlsTable::FILTER_ALL => 'All', ShorturlsTable::FILTER_MY => 'Only my Urls', ShorturlsTable::FILTER_SHARED => 'Only Shared Urls'];
+
+    public function __construct(Admins2DomainsTable $admins2ShorturlsTable, ShorturlsTable $shorturlsTable, Shorturls2UsersTable $shorturls2UsersTable, DomainsProvider $domainsProvider, AuthenticationService $authService)
+    {
+        $this->admins2ShorturlsTable = $admins2ShorturlsTable;
+        $this->shorturlsTable = $shorturlsTable;
+        $this->shorturls2UsersTable = $shorturls2UsersTable;
+        $this->domainsProvider = $domainsProvider;
+        $this->authService = $authService;
+        $this->user = $this->authService->getIdentity();
+        $this->user->domainIds = $this->admins2ShorturlsTable->getAdminDomains($this->user->id);
+        $this->user->shorturlIds = $this->shorturls2UsersTable->getShortUrlIdsByUser($this->user->id);
+    }
+
+    public function indexAction()
+    {
+        $this->layout()->showSearch = true;
+
+        $queryParams = $this->getRequest()->getQuery();
+        $queryParams['order'] = $queryParams['order'] === "desc" ? "asc" : "desc";
+
+        if (empty($queryParams['domain'])) {
+            $queryParams['domain'] = ShorturlsTable::DOMAIN_ALL;
+        };
+        $domainId = 0;
+        if (!empty($queryParams['domain'])) {
+            $domainId = $this->domainsProvider->getIdByDomain($queryParams['domain']);
+        }
+
+        $userIsAdmin = false;
+        if ($this->user->isSuperAdmin()) {
+            $userIsAdmin = true;
+        } else if ($domainId !== 0 && $this->user && $this->user->isAdmin()) {
+            if (in_array($domainId, $this->user->domainIds)) {
+                $userIsAdmin = true;
+            }
+        }
+        if ($userIsAdmin) {
+            $this->filters[ShorturlsTable::FILTER_ADMIN] = 'Admin';
+        }
+
+        if (empty($queryParams['filter']) || !array_key_exists($queryParams['filter'], $this->filters)) {
+            $queryParams['filter'] = ShorturlsTable::FILTER_MY;
+        };
+        if (empty($queryParams['offset'])) {
+            $queryParams['offset'] = 0;
+        };
+
+        $shorturls = [];
+        switch ($queryParams['filter']) {
+            case ShorturlsTable::FILTER_ALL:
+                $shorturls = $this->shorturlsTable->getSharedShortUrls($this->user->id, $this->user->shorturlIds, $domainId, true, $queryParams['offset']);
+                break;
+            case ShorturlsTable::FILTER_SHARED:
+                $shorturls = $this->shorturlsTable->getSharedShortUrls($this->user->id, $this->user->shorturlIds, $domainId, false, $queryParams['offset']);
+                break;
+            case ShorturlsTable::FILTER_ADMIN:
+                if ($userIsAdmin) {
+                    $shorturls = $this->shorturlsTable->getAllShortUrls($domainId, $queryParams['offset']);
+                    break;
+                }
+            default:
+                $shorturls = $this->shorturlsTable->getMyShortUrls($this->user->id, $domainId, $queryParams['offset']);
+                break;
+        }
+
+        return new ViewModel([
+            'shorturls' => $shorturls,
+            'user' => $this->user,
+            'queryParams' => $queryParams,
+            'domainParam' => $queryParams['domain'],
+            'filterParam' => $queryParams['filter'],
+            'domains' => $this->domainsProvider->fetchAll(),
+            'filters' => $this->filters,
+        ]);
+    }
+}

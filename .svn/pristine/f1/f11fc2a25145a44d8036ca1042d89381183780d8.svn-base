@@ -1,0 +1,20 @@
+<?php
+declare (strict_types = 1);
+
+namespace Application\Service;
+
+class Layout
+{
+    public $showLogout = false;
+    public $showProfileLink = false;
+    public $showSearch = false;
+    public $languages = [];
+    public $activeLanguage;
+
+    public function __construct($config, $session)
+    {
+        $this->languages = $config['languages'];
+        $this->activeLanguage = $session['activeLanguage'];
+    }
+
+}

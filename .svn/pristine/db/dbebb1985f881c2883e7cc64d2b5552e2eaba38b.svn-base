@@ -1,0 +1,4 @@
+<div class="loading-notification">
+    <span class="loading-text"><?=$this->translate("loading")?></span>
+    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>
+</div>

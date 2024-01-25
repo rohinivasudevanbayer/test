@@ -1,0 +1,25 @@
+<?php
+function prepareForJsPrint($content)
+{
+    $content = preg_replace("/'/", "\'", $content);
+    $content = preg_replace("/\r|\n/", "", $content);
+    $content = preg_replace("/[ ]{2,}/", "", $content);
+    return $content;
+}
+$modalStart = prepareForJsPrint($this->modal()->renderStart('###modalName###'));
+$modalEnd = prepareForJsPrint($this->modal()->renderEnd());
+$loadingNotification = prepareForJsPrint($this->partial('partial/loading-notification.phtml'));
+
+$this->inlineScript()->captureStart();
+echo <<<JS
+$(function () {
+    var fromPhp = {
+        'loadingNotification': '{$loadingNotification}',
+        'modalStart': '{$modalStart}',
+        'modalEnd': '{$modalEnd}'
+    };
+
+    window.fromPhp = fromPhp;
+});
+JS;
+$this->inlineScript()->captureEnd();

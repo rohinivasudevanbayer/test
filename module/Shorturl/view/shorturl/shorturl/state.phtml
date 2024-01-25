@@ -1,0 +1,27 @@
+<?php if ($this->isXmlHttpRequest): ?>
+    <?=$this->modal()->renderXmlHttpTop('shorturl-state', $this->translate('title for status modal'))?>
+<?php endif;?>
+<div>
+    <?php if (!empty($this->error)): ?>
+    <div class="alert alert-danger">
+        <?=$this->translate($this->error)?>
+    </div>
+    <?php else: ?>
+    <p><strong>https://<?=$this->shorturl->short_url?></strong></p>
+    <p><?=$this->translate($this->shorturl->status == 1 ? 'short url status will change to inactive' : 'short url status will change to active')?></p>
+    <?php endif;?>
+</div>
+<form method="get" action="<?=$this->url('shorturl', ['action' => 'state', 'id' => $this->shorturl->id])?>">
+    <input name="new_state" type="hidden" value="<?=$this->shorturl->status == 1 ? 0 : 1?>" />
+    <?php if (!$this->isXmlHttpRequest): ?>
+    <a href="<?=$this->url('shorturl', [], ['query' => $this->queryParams])?>" name="cancel" class="btn btn-default" type="submit"><?=$this->translate('Cancel')?></a>
+    <button name="change_state" class="btn btn-primary" type="submit"><?=$this->translate('Yes')?></button>
+    <?php endif;?>
+</form>
+<?php if ($this->isXmlHttpRequest): ?>
+<?php if (empty($this->error)): ?>
+    <?=$this->modal()->renderXmlHttpBottom('shorturl-state', $this->translate('Cancel'), $this->translate('Yes'), $this->url('shorturl', ['action' => 'state', 'id' => $this->shorturl->id], ['query' => array_merge($this->queryParams, ['new_state' => $this->shorturl->status == 1 ? 0 : 1])]))?>
+<?php else: ?>
+    <?=$this->modal()->renderXmlHttpBottom('shorturl-state', $this->translate('Cancel'), null, $this->url('shorturl', [], ['query' => [$this->queryParams]]))?>
+<?php endif;?>
+<?php endif;?>

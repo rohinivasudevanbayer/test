@@ -1,0 +1,557 @@
+body {
+    background: #F3f3f3;
+}
+
+.container {
+    background: #fff;
+}
+
+body a {
+    text-decoration: none !important;
+}
+
+.breadcrumb {
+    overflow: hidden;
+}
+
+.breadcrumb > li + li::before {
+    content: "/";
+}
+
+input.small-int-input {
+    width: 80px;
+}
+
+form ul.errors {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+form ul.errors {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+form select.input_error,
+form textarea.input_error,
+form input.input_error {
+    background: #FFE8E8;
+}
+
+form ul.errors li {
+    background: none repeat scroll 0 0 #d9534f;
+    color: #fff;
+    font-size: 13px;
+    margin-left: 0;
+    margin-top: 0;
+    padding: 2px 2px 5px 6px;
+}
+
+form select.multiple option {
+    background: #DEE8F2;
+    margin-bottom: 1px;
+    padding: 3px 10px;
+    height: 28px;
+}
+
+.table-striped > tbody > tr:nth-child(2n+1) > td, .table-striped > tbody > tr:nth-child(2n+1) > th {
+    background-color: transparent;
+}
+
+.glyphicon-refresh-animate {
+    -animation: spin 1.5s infinite linear;
+    -ms-animation: spin 1.5s infinite linear;
+    -webkit-animation: spinw 1.5s infinite linear;
+    -moz-animation: spinm 1.5s infinite linear;
+}
+
+@keyframes spin {
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+@-webkit-keyframes spinw {
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@-moz-keyframes spinm {
+    from {
+        -moz-transform: rotate(0deg);
+    }
+    to {
+        -moz-transform: rotate(360deg);
+    }
+}
+
+div.loading {
+    z-index: 2500 !important;
+}
+
+div.loading span {
+    font-size: 25px;
+    color: #DF691A;
+}
+
+div.loading span.loading {
+    font-size: 15px;
+    color: #DF691A;
+}
+
+.header-right {
+    margin-top: 10px;
+}
+
+#banner.page-header {
+    border-bottom: 1px solid #eeeeee;
+    margin: 0px 0 20px;
+    padding-bottom: 9px;
+}
+
+#bayer-slogan {
+    overflow: hidden;
+}
+
+#bayer-slogan,
+#bayer-slogan object,
+#bayer-slogan img {
+    height: 8rem;
+}
+
+#bayer-slogan .bayer-slogan-text {
+    margin-left: -32px;
+    margin-top: -8px;
+}
+
+img.bayer-slogan-text {
+    height: 88px;
+}
+
+DIV.login-rcb-toolbox {
+    padding-top: 107px;
+}
+
+DIV.login-rcb-toolbox ul li a {
+    text-decoration: none;
+}
+
+footer {
+    background-color: #f3f3f3;
+    color: #666;
+    margin: 40px 0 1.5em;
+    overflow: hidden;
+    padding: 6px 10px 5px;
+    font-size: 1.1rem;
+}
+
+footer .legal {
+    float: right;
+    margin: -6px 0 -5px;
+}
+
+footer .cright {
+    line-height: 10px;
+    display: inline;
+}
+
+footer .cright span:first-child {
+    border-right: 1px solid #dcdcdc;
+    margin-right: 7px;
+    padding-right: 10px;
+}
+
+footer .cright span {
+    display: inline-block;
+}
+
+footer .ifooter .legal li {
+    float: left;
+    background: none;
+    border: none;
+    list-style: none;
+
+}
+
+footer .ifooter li a {
+    border-left: 1px solid #fff;
+    color: #666;
+    display: block;
+    padding: 6px 13px 4px;
+}
+
+#contact-form textarea {
+    height: 250px;
+    font-weight: bold;
+}
+
+form ul.errors {
+    /**  display: none */
+    margin-bottom: 7px;
+}
+
+label {
+
+}
+
+header {
+    padding-top: 1rem;
+}
+
+.navbar {
+    margin-bottom: 0 !important;
+}
+
+.navbar-right-padding {
+    padding-right: 39px;
+}
+
+table.table thead {
+    background: none repeat scroll 0 0 #80ac45;
+    color: #fff;
+}
+
+td.actions {
+    white-space: nowrap;
+}
+
+div.actions {
+    padding: 10px;
+    margin-top: 1.3em;
+}
+
+table td.actions a,
+div.actions a {
+    text-decoration: none;
+    padding-right: 5px;
+    font-size: 1.100em;
+    color: orangered;
+}
+
+div.actions label {
+    font-size: 1.2em;
+    color: #CCC;
+    padding-right: 20px;
+}
+
+.actions a:hover {
+    color: black;
+}
+
+.active-status {
+    color: #80ac45;
+}
+
+.inactive-status,
+.expired-status {
+    color: darkred;
+}
+
+.expiresoon-status {
+    color: orangered;
+}
+
+div.loading {
+    z-index: 2500 !important;
+}
+
+div.loading span {
+    font-size: 25px;
+    color: #DF691A;
+}
+
+div.loading span.loading {
+    font-size: 15px;
+    color: #DF691A;
+}
+
+.info-shorturl-manage-user {
+    display: block;
+    font-size: 12px;
+    text-align: right;
+}
+
+#shorturl-info table tr td:first-child {
+    background: #EEE;
+    font-weight: bold;
+}
+
+#shorturl-info table tr td ul {
+    margin: 0 0 15px 0;
+    padding: 10px;
+}
+
+#shorturl-info table tr td ul li {
+    list-style: inside;
+}
+
+input.number {
+    width: 70px;
+}
+
+#generate-qr-code input.form-control {
+    display: inline !important;
+}
+
+#generate-qr-code input.text {
+    width: 50%;
+}
+
+input.has-error {
+    border-color: #b94a48;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+}
+
+select.default {
+    border: 1px solid #ccc;
+    font-size: 1em;
+    padding: 5px;
+}
+
+.table.row .col h3 {
+    padding: 0;
+    margin: 0;
+}
+
+.spacer {
+    margin: 5px 0;
+}
+
+.my-data .list-group-item label {
+    display: block;
+    width: 100px;
+    float: left;
+}
+
+ul.breadcrumb {
+    display: flex;
+    align-items: center;
+    overflow: visible !important;
+    
+}
+
+ul.breadcrumb li.search:before,
+ul.breadcrumb li.last:before {
+    display: none;
+}
+
+ul.breadcrumb li.search form {
+    margin: 0;
+    padding: 0;
+}
+
+ul.breadcrumb li.last {
+    text-align: right;
+    float: right;
+    margin-left: auto;
+}
+
+.add-shorturl .btn .glyphicon {
+    padding-right: 4px;
+}
+
+.view-header h3 {
+    padding: 0;
+    margin: 0;
+}
+
+.view-header {
+    padding-bottom: 1.5rem;
+}
+
+#metanav div {
+    /*margin-bottom: 0.8rem;*/
+}
+
+#metanav div.last {
+    margin-bottom: 0;
+}
+
+hr.dotted {
+    border: 0;
+    border-bottom: dotted 1px #ccc;
+    margin: 10px 0 20px 0
+}
+
+.filter .input-daterange {
+    width: auto;
+}
+
+.filter .input-daterange .input-group-addon:first-child {
+    border-left: 1px solid #ccc;
+}
+
+.chart-container {
+    box-sizing: border-box;
+    width: auto;
+    height: 450px;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 100%;
+    font-size: 14px;
+    line-height: 1.2em;
+}
+
+.chart-container .legendLabel {
+    padding-left: 5px;
+}
+
+.chart-container .legend table {
+    border-spacing: 5px;
+}
+
+#shorturl-form {
+    overflow: hidden;
+}
+
+#shorturl-form #Submit-label,
+#shorturl-form #cancel-label {
+    display: none;
+}
+
+#shorturl-form #Submit,
+#shorturl-form #cancel {
+    float: left;
+    display: block;
+}
+
+#shorturl-form #Submit {
+    margin: 1em 0 0 0.5em;
+}
+
+#shorturl-form #cancel {
+    margin: 1em 0 0 0;
+}
+
+.actions button[name=cancel] {
+    margin-right: 1em;
+}
+
+#link-dimensions {
+    cursor: pointer;
+}
+
+#bayer-logo a {
+    margin-right: 15px;
+    display: inline-block;
+}
+
+#bayer-logo object {
+    pointer-events: none;
+}
+
+#language-select {
+    /* margin-bottom: 1em;*/
+    font-weight: normal;
+}
+
+dd {
+    margin-bottom: 1em;
+}
+
+#shared-user-list {
+    margin-top: 15px;
+}
+
+/* Internet Explorer 10&11 only: */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+
+}
+
+.shared-status .glyphicon {
+    color: #bbb;
+    cursor: help;
+}
+
+.btn-back {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.box-maininfo {
+    display: flex;
+    align-items: center;
+}
+
+#thead-expire {
+    background: indianred;
+}
+
+#tr-expire {
+    background: #c97979;
+}
+
+#tr-expire a {
+    color: #0e519c;
+}
+
+#tr-expire .glyphicon {
+    color: white;
+}
+
+.blank-line {
+    padding: 5px;
+    clear: both;
+}
+
+#created_at-element,
+#created_at-label,
+#updated_at-element,
+#updated_at-label {
+    display: none;
+}
+
+.admin-navigation {
+    float: right;
+}
+.admin-navigation ul{
+    list-style: none;
+    display: flex;
+}
+.admin-navigation ul li{
+    margin-right: 5px;
+}
+
+.white-link th a {
+    color: white !important;
+    text-decoration: underline !important;
+}
+
+#selected_urls {
+    list-style:none; 
+    padding: 0; 
+    margin:0;
+}
+
+#selected_urls li div, 
+#selected_urls li span {
+    display: block;
+}
+
+#selected_urls li span {
+    cursor: pointer;
+}
+
+#selected_urls li {
+    display: flex;
+    background: #eff2d8;
+    margin: 2px;
+    padding: 5px 25px;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+@-moz-document url-prefix() {
+  fieldset { display: table-cell; }
+}

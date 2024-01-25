@@ -1,0 +1,145 @@
+-- Remove import backup
+DROP TABLE IF EXISTS `su_shorturl_02112017`;
+
+-- Clean up mail duplicates first
+-- SELECT * FROM `su_user` WHERE `email` !='' GROUP BY `email` HAVING COUNT(*) > 1;
+
+-- Fix collation
+ALTER TABLE `su_user` DEFAULT CHARSET=utf8 COLLATE utf8_unicode_ci;
+ALTER TABLE `su_user` CHANGE `id` `id` INT(11) NOT NULL AUTO_INCREMENT, CHANGE `ldap_uid` `ldap_uid` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, CHANGE `password` `password` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, CHANGE `name` `name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, CHANGE `firstname` `firstname` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, CHANGE `email` `email` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL, CHANGE `role` `role` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT 'user', CHANGE `created_at` `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP; 
+
+-- Fix Jiri
+UPDATE `su_url2user` SET `user_id` = 2871 WHERE `user_id` = 111; 
+
+-- Remove imported broken users
+DELETE FROM `su_user` WHERE `fake` = 1 AND `email` = '';
+
+-- Removed obsolete flag
+ALTER TABLE `su_user` DROP `fake`; 
+
+-- Removed unused column
+ALTER TABLE `su_user` DROP `invited_by`;
+
+-- Removed unused column
+ALTER TABLE `su_user` DROP `bayer_user`; 
+
+-- Move roles to su_users flags
+ALTER TABLE `su_user` ADD `notifynotfound` TINYINT(1) NOT NULL DEFAULT '0' AFTER `role`, ADD `admin` TINYINT(1) NOT NULL DEFAULT '0' AFTER `notifynotfound`, ADD `superadmin` TINYINT(1) NOT NULL DEFAULT '0' AFTER `admin`;
+UPDATE `su_user` SET `admin` = 1 WHERE `role` = 'admin';
+UPDATE `su_user` SET `superadmin` = 1 WHERE `role` = 'superAdmin';
+UPDATE `su_user` SET `notifynotfound` = 1 WHERE `email` IN (SELECT `email` FROM `su_admins`);
+ALTER TABLE `su_user` DROP `role`;
+DROP TABLE IF EXISTS `su_admins`;
+
+-- Rename tables to functional names/plural
+RENAME TABLE `su_user` TO `su_users`;
+RENAME TABLE `su_shorturl` TO `su_shorturls`; 
+RENAME TABLE `su_user_role` TO `su_admins2domains`;
+
+-- Normalize domain to domain_id
+ALTER TABLE `su_admins2domains` ADD `domain_id` INT NOT NULL AFTER `resource`; 
+UPDATE `su_admins2domains` SET `domain_id` = 2 WHERE `resource` = 'go.cnb';
+UPDATE `su_admins2domains` SET `domain_id` = 3 WHERE `resource` = 'go.bayer.com';
+ALTER TABLE `su_admins2domains` DROP `resource`;
+
+-- Remove owners from shared table
+DELETE `su_url2user` FROM `su_shorturls` INNER JOIN `su_url2user` ON `su_shorturls`.`id` = `su_url2user`.`url_id` AND `su_shorturls`.`user_id` = `su_url2user`.`user_id`;
+ALTER TABLE `su_url2user` DROP `shared`;
+ALTER TABLE `su_url2user` CHANGE `url_id` `shorturl_id` INT(11) NOT NULL;
+CREATE TABLE `su_shorturls2users` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `shorturl_id` int(11) NOT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+INSERT IGNORE INTO su_shorturls2users SELECT * FROM su_url2user;
+DROP TABLE `su_url2user`;
+
+-- Normalize domain to domain_id
+ALTER TABLE `su_shorturls` ADD `domain_id` INT NOT NULL AFTER `domain`;
+UPDATE `su_shorturls` SET `domain_id` = 2 WHERE `domain` = 'go.cnb';
+UPDATE `su_shorturls` SET `domain_id` = 3 WHERE `domain` = 'go.bayer.com';
+ALTER TABLE `su_shorturls` DROP `domain`;
+
+-- Normalize domain to domain_id
+ALTER TABLE `su_shorturl_history` ADD `domain_id` INT NOT NULL AFTER `domain`;
+UPDATE `su_shorturl_history` SET `domain_id` = 2 WHERE `domain` = 'go.cnb';
+UPDATE `su_shorturl_history` SET `domain_id` = 3 WHERE `domain` = 'go.bayer.com';
+ALTER TABLE `su_shorturl_history` DROP `domain`;
+
+-- Column renamed to actual reference
+ALTER TABLE `su_shorturl_history` CHANGE `su_id` `shorturl_id` INT(11) NOT NULL;
+
+-- Normalize users to user_id
+ALTER TABLE `su_shorturls` ADD `updated_by_id` INT NOT NULL AFTER `updated_by`; 
+UPDATE `su_shorturls` INNER JOIN `su_users` ON `su_shorturls`.`updated_by` = `su_users`.`ldap_uid` SET `su_shorturls`.`updated_by_id` = `su_users`.`id`;
+ALTER TABLE `su_shorturls` DROP `updated_by`;
+ALTER TABLE `su_shorturls` CHANGE `updated_by_id` `updated_by` INT(11) NOT NULL; 
+
+-- Normalize users to user_id
+ALTER TABLE `su_shorturl_history` ADD `updated_by_id` INT NOT NULL AFTER `updated_by`;
+UPDATE `su_shorturl_history` INNER JOIN `su_users` ON `su_shorturl_history`.`updated_by` = `su_users`.`ldap_uid` SET `su_shorturl_history`.`updated_by_id` = `su_users`.`id`;
+ALTER TABLE `su_shorturl_history` DROP `updated_by`;
+ALTER TABLE `su_shorturl_history` CHANGE `updated_by_id` `updated_by` INT(11) NOT NULL;
+
+-- Normalize domain to domain_id
+ALTER TABLE `su_blacklist` ADD `domain_id` INT NOT NULL AFTER `domain`;
+UPDATE `su_blacklist` SET `domain_id` = 2 WHERE `domain` = 'go.cnb';
+UPDATE `su_blacklist` SET `domain_id` = 3 WHERE `domain` = 'go.bayer.com';
+ALTER TABLE `su_blacklist` DROP `domain`;
+
+-- Normalize users to user_id
+ALTER TABLE `su_blacklist` ADD `created_by_id` INT NOT NULL AFTER `created_by`;
+UPDATE `su_blacklist` INNER JOIN `su_users` ON `su_blacklist`.`created_by` = `su_users`.`ldap_uid` SET `su_blacklist`.`created_by_id` = `su_users`.`id`;
+ALTER TABLE `su_blacklist` DROP `created_by`;
+ALTER TABLE `su_blacklist` CHANGE `created_by_id` `created_by` INT(11) NOT NULL;
+
+-- Table corrections
+ALTER TABLE `su_logs` CHANGE `mail_send_date` `mail_sent_date` DATETIME NOT NULL;
+ALTER TABLE `su_logs` DROP `mail_send`;
+ALTER TABLE `su_logs` DROP `action`;
+ALTER TABLE `su_logs` CHANGE `value` `short_url` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL;
+RENAME TABLE `su_logs` TO `su_notfound`;
+
+-- Table optimizations
+ALTER TABLE `su_admins2domains` CHANGE `id` `id` INT(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `su_admins2domains` ADD UNIQUE( `user_id`, `domain_id`);
+
+ALTER TABLE `su_blacklist` ADD UNIQUE( `short_url`);
+ALTER TABLE `su_blacklist` ADD UNIQUE( `domain_id`, `url_code`); 
+
+ALTER TABLE `su_domains` ADD UNIQUE( `domain`);
+
+ALTER TABLE `su_notfound` ADD INDEX( `mail_sent_date`); 
+
+ALTER TABLE `su_shorturls` ADD INDEX( `short_url`, `status`);
+
+-- Prevent common static files
+INSERT INTO `su_blacklist` (`id`, `short_url`, `domain_id`, `url_code`, `created_at`, `created_by`) VALUES (NULL, 'go.bayer.com/robots.txt', '3', 'robots.txt', CURRENT_TIME(), '2562'), (NULL, 'go.cnb/robots.txt', '2', 'robots.txt', CURRENT_TIME(), '2562');
+INSERT INTO `su_blacklist` (`id`, `short_url`, `domain_id`, `url_code`, `created_at`, `created_by`) VALUES (NULL, 'go.bayer.com/favicon.ico', '3', 'favicon.ico', CURRENT_TIME(), '2562'), (NULL, 'go.cnb/favicon.ico', '2', 'favicon.ico', CURRENT_TIME(), '2562');
+
+RENAME TABLE `su_shorturl_history` TO `su_shorturls_history`;
+ALTER TABLE `su_shorturls_history` ADD INDEX( `updated_at`); 
+
+-- User with no email address but shorturl
+UPDATE `su_users` SET `email` = `ldap_uid` WHERE `ldap_uid` IN (SELECT `ldap_uid` FROM `su_users` LEFT JOIN su_shorturls2users ON su_users.id = su_shorturls2users.user_id WHERE su_users.id != 1 AND email = '' AND shorturl_id IS NOT NULL GROUP BY su_users.id);
+-- SELECT * FROM `su_users` LEFT JOIN su_shorturls2users ON su_users.id = su_shorturls2users.user_id WHERE su_users.id != 1 AND email = '' AND shorturl_id IS NOT NULL GROUP BY su_users.id;
+-- UPDATE `su_users` SET `email` = '<>' WHERE `ldap_uid` = '<>';
+-- ...
+DELETE FROM `su_users` WHERE `email` = '';
+ALTER TABLE `su_users` DROP `ldap_uid`;
+ALTER TABLE `su_users` ADD UNIQUE( `email`);
+UPDATE `su_users` SET `password` = '';
+
+ALTER TABLE `su_users` ADD INDEX( `notifynotfound`);
+ALTER TABLE `su_users` ADD INDEX( `admin`);
+ALTER TABLE `su_users` ADD INDEX( `superadmin`);
+
+ALTER TABLE `su_shorturls` CHANGE `updated_by` `updated_by` INT(11) NOT NULL DEFAULT '0';
+ALTER TABLE `su_shorturls` CHANGE `domain_id` `domain_id` INT(11) NOT NULL DEFAULT '0';
+
+-- FZ 22.01.2020 - change of password field length
+ALTER TABLE `su_users` CHANGE `password` `password` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL; 
+
+-- FZ 22.01.2020 - set passwords for devs
+--UPDATE `su_users` SET `password` = '$2y$10$AnC2E8X2.tHtXHkkvy/coed78qYfcX28p92o0UXsXrc09NaDro.FK' WHERE `su_users`.`id` = 2694; -- FZ
+--UPDATE `su_users` SET `password` = '$2y$10$FjgLN3dJUHfiL2CxJvYsieidvu5o5dkvb82k.QU597vI9.WiiG4Sy' WHERE `su_users`.`id` = 2562; -- LL

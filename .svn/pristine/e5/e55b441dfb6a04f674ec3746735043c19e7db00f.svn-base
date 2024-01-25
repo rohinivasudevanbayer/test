@@ -1,0 +1,17 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+
+class DomainsTable extends AbstractTable
+{
+    public function getByDomain($domain)
+    {
+        $rowset = $this->tableGateway->select(['domain' => $domain]);
+        $row = $rowset->current();
+        if ($row) {
+            return $row->id;
+        }
+        return 0;
+    }
+}

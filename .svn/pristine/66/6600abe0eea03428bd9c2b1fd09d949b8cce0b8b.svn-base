@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * Local Configuration Override
+ *
+ * This configuration override file is for overriding environment-specific and
+ * security-sensitive configuration information. Copy this file without the
+ * .dist extension at the end and populate values as needed.
+ */
+
+return [
+    'db' => [
+        'driver' => 'Pdo',
+        'dsn' => 'mysql:dbname=' . $_SERVER['RDS_DB_NAME'] . ';host=' . $_SERVER['RDS_HOSTNAME'] . ';charset=utf8',
+        'username' => $_SERVER['RDS_USERNAME'],
+        'password' => $_SERVER['RDS_PASSWORD']
+    ],
+    'contact_mail' => [
+        'receiver' => [
+            'email' => '',
+        ],
+    ],
+];

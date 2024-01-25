@@ -1,0 +1,9 @@
+<div class="row">
+    <div class="col col-md-12">
+        <?php if (!empty($this->error)): ?>
+            <div class="alert alert-danger">
+                <?=$this->translate($this->error)?>
+            </div>
+        <?php endif;?>
+    </div>
+</div>

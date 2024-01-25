@@ -1,0 +1,19 @@
+<?php
+namespace Shorturl\Model;
+
+class NotFound
+{
+    public $id;
+    public $short_url;
+    public $created_at;
+    public $mail_sent_date = 0;
+
+    public function exchangeArray(array $data)
+    {
+        $this->id = !empty($data['id']) ? $data['id'] : null;
+        $this->short_url = !empty($data['short_url']) ? $data['short_url'] : '';
+        $this->created_at = !empty($data['created_at']) ? $data['created_at'] : null;
+        $this->mail_sent_date = !empty($data['mail_sent_date']) ? $data['mail_sent_date'] : 0;
+    }
+
+}

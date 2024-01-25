@@ -1,0 +1,27 @@
+<?php
+namespace Shorturl\Model;
+
+use Application\Model\AbstractTable;
+
+class Shorturls2UsersTable extends AbstractTable
+{
+    /** @var string TABLENAME The name of the table */
+    const TABLENAME = 'su_shorturls2users';
+
+    /**
+     * Fetches a list of shared shorturl ids
+     *
+     * @param integer $userId
+     *            The id of the current user
+     * @return array
+     */
+    public function getShortUrlIdsByUser($userId): array
+    {
+        $ids = [];
+        $rowset = $this->tableGateway->select(['user_id' => $userId]);
+        foreach ($rowset as $row) {
+            $ids[] = $row->shorturl_id;
+        }
+        return $ids;
+    }
+}

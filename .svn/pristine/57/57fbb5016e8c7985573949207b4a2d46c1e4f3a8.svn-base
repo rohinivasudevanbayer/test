@@ -1,0 +1,21 @@
+<?php
+// module/Album/view/album/album/index.phtml:
+
+$title = 'My shorturls';
+$this->headTitle($title);
+?>
+<h1><?= $this->escapeHtml($title) ?></h1>
+<table class="table">
+<tr>
+    <th>ID</th>
+    <th>ShortUrl</th>
+	<th>TargetUrl</th>
+</tr>
+<?php foreach ($shorturls as $shorturl) : ?>
+    <tr>
+        <td><?= $this->escapeHtml($shorturl->id) ?></td>
+        <td><?= $this->escapeHtml($shorturl->short_url) ?></td>
+		<td><?= $this->escapeHtml($shorturl->target_url) ?></td>
+    </tr>
+<?php endforeach; ?>
+</table>

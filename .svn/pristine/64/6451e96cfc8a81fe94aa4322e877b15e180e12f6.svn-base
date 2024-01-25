@@ -1,0 +1,62 @@
+<div style="padding: 15px">
+    <h1>Documentation </h1>
+    <h2>Using ShortURLs</h2>
+    <p>Adding a ShortURL creates a short and easy to remember URL. The ShortURL redirects to a chosen destination. The destination can be a long and hard to remember URL (or any other URL). The ShortURL can be shared with other users (e.g. to send a short URL instead of a long Sharepoint link).</p>
+
+    <h2>Creating a ShortURL</h2>
+    <p>To create a new ShortURL click the button "Add ShortURL".</p>
+    <img src="/images/EN-create_new_shortURL.png">
+    <p>The following four options have to be made in the dialog. </p>
+    <img src="/images/EN-create_new_shortURL_form.png">
+    <p>TargetURL: The destination the ShortURL redirects the user.<br>
+      ShortURL: The short term of the ShortURL. This can be entered or set automatically.<br>
+        Expiry date: The date when the ShortURL is no longer available.<br>
+        Status: Status of the ShortURL. If the ShortURL is deactivated, the redirection is no longer working.</p>
+    <p>Clicking "Save" saves the new ShortURL.</p>
+
+    <h2>Displaying ShortURLs</h2>
+    <p>You can review all ShortURLs you have access to on your overview page.</p>
+    <img src="/images/EN-my_shortURLs.png">
+    <p>The list can be filtered by two options.</p>
+
+    <h3>Filter</h3>
+    <p>Shows only ShortURLs you have created or only ShortURLs that other useres have created and shared with you.</p>
+    <img src="/images/EN-filter.png">
+
+    <h3>Domain</h3>
+    <p>Shows only ShortURLs of a certain domain.</p>
+    <img src="/images/EN-domains.png">
+    <p>&nbsp;</p>
+    <p>By clicking on the action buttons right of the ShortURL name the user can access the most used functionalities directly.</p>
+
+    <h2>Editing a ShortURL</h2>
+    <p>To edit an existing ShortURL click on the button "Edit".</p>
+    <img src="/images/edit_button.png">
+    <p>The new dialog shows options to change the data that was entered when creating the ShortURL (exception: the ShortURL itself).</p>
+    <img src="/images/EN-edit_shortURL.png">
+
+    <h2>Statistics of a shortURL</h2>
+    <p>The statistics of a certain ShortURL can be viewed by clicking on the button "statistics".</p>
+    <img src="/images/statistic_button.png">
+    <p>In the new dialog the user can select the date range that is used for showing the statistics.</p>
+    <img src="/images/EN-statistic_timeframe.png">
+    <p>Below, the statistic for the selected range is shown.</p>
+
+    <h2>Sharing a ShortURL</h2>
+    <p>To share a ShortURL select the function from the edit dialog in the right column. The column shows with whom the ShortURL is already shared.</p>
+    <img src="/images/EN-share_shortURL.png">
+
+    <h2>Search ShortURLs</h2>
+    <p>To search for a certain ShortURL or for multiple ShortURLs enter the complete string or a part of it to the search function.</p>
+    <img src="/images/EN-search.png">
+    <p>The crawler searches in the complete list of "your" ShortURLs.</p>
+
+    <h2>My Profile</h2>
+    <p>To review your profile click on "my profile".</p>
+    <img src="/images/EN-my_profile.png">
+    <p>This dialog allows you to review statistics, administrate ShortURLs and change your data.</p>
+
+    <h2>Language</h2>
+    <p>The user interface of the ShortURL website can be shown in English or German. To change the language click on the dropdown in the top right corner of the website.</p>
+    <img src="/images/EN-language.png">
+</div>
